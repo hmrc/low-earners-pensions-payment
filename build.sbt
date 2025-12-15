@@ -9,14 +9,28 @@ lazy val microservice = Project("low-earners-pensions-payment", file("."))
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
-    // suppress warnings in generated routes files
-    scalacOptions += "-Wconf:src=routes/.*:s",
+    scalafmtOnCompile := true,
+    PlayKeys.playDefaultPort := 7504
   )
-  .settings(CodeCoverageSettings.settings: _*)
+  .settings(scalacOptions ++= Seq(
+    "-feature",
+    "-deprecation",
+    "-Wconf:msg=unused import&src=conf/.*:s",
+    "-Wconf:msg=Flag.*repeatedly:s",
+    "-Wconf:src=routes/.*:s")
+  )
+  .settings(CodeCoverageSettings.settings *)
 
 lazy val it = project
+  .in(file("it"))
   .enablePlugins(PlayScala)
-  .dependsOn(microservice % "test->test")
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
   .settings(DefaultBuildSettings.itSettings())
-  .settings(libraryDependencies ++= AppDependencies.it)
+  .settings(
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    Test / fork := true,
+    Test / scalafmtOnCompile := true,
+    Test / unmanagedResourceDirectories += baseDirectory.value / "it" / "test" / "resources"
+  )
+
+addCommandAlias("testc", "; clean ; coverage ; test ; it/test ; coverageReport ;")
