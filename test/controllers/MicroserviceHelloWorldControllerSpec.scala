@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.lowearnerspensionspayment
+package controllers
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import play.api.http.Status
+import play.api.test.Helpers.*
+import play.api.test.{FakeRequest, Helpers}
 
-import java.time.Clock
+class MicroserviceHelloWorldControllerSpec
+  extends AnyWordSpec
+     with Matchers:
 
-class Module extends AppModule:
+  private val fakeRequest = FakeRequest("GET", "/")
+  private val controller  = new MicroserviceHelloWorldController(Helpers.stubControllerComponents())
 
-  override def bindings(
-    environment  : Environment,
-    configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
-    Nil
+  "GET /" should:
+    "return 200" in:
+      val result = controller.hello()(fakeRequest)
+      status(result) shouldBe Status.OK
