@@ -18,7 +18,16 @@ package models.bars
 
 import play.api.libs.json.{Json, OFormat}
 
-case class BarsResponse()
+case class BarsResponse(accountNumberIsWellFormatted: String,
+                        accountExists: String,
+                        nameMatches: String,
+                        accountName: Option[String],
+                        nonStandardAccountDetailsRequiredForBacs: String,
+                        sortCodeIsPresentOnEISCD: String,
+                        sortCodeSupportsDirectDebit: String,
+                        sortCodeSupportsDirectCredit: String,
+                        sortCodeBankName: Option[String],
+                        iban: Option[String])
 
 object BarsResponse {
   implicit val format: OFormat[BarsResponse] = Json.format[BarsResponse]

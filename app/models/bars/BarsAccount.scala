@@ -16,10 +16,11 @@
 
 package models.bars
 
-import play.api.libs.json.{Format, Json, OFormat, OWrites}
+import play.api.libs.json.{Format, Json}
 
-case class BarsRequest(account: BarsAccount, subject: BarsSubject)
+case class BarsAccount(sortCode: String,
+                       accountNumber: String)
 
-object BarsRequest {
-  implicit val format: OFormat[BarsRequest] = Json.format[BarsRequest]
+object BarsAccount {
+  implicit val format: Format[BarsAccount] = Json.format[BarsAccount]
 }

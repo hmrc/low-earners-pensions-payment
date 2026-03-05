@@ -17,7 +17,63 @@
 package models.bars
 
 import base.SpecBase
+import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue, Json}
 
 class BarsResponseSpec extends SpecBase {
+  private val testJson: JsValue = Json.parse(
+    """
+      |{
+      | "nonStandardAccountDetailsRequiredForBacs": "no",
+      | "sortCodeSupportsDirectDebit": "yes",
+      | "sortCodeSupportsDirectCredit": "yes",
+      | "accountNumberIsWellFormatted": "indeterminate",
+      | "nameMatches": "indeterminate",
+      | "sortCodeIsPresentOnEISCD": "yes",
+      | "sortCodeBankName": "Test",
+      | "accountExists": "no",
+      | "accountName": "Taxwell Payer",
+      | "iban": "test-iban"
+      |}
+    """.stripMargin)
 
+  private val testModel: BarsResponse = BarsResponse(
+    accountNumberIsWellFormatted = "indeterminate",
+    accountExists = "no",
+    nameMatches = "indeterminate",
+    accountName = Some("Taxwell Payer"),
+    nonStandardAccountDetailsRequiredForBacs = "no",
+    sortCodeIsPresentOnEISCD = "yes",
+    sortCodeSupportsDirectDebit = "yes",
+    sortCodeSupportsDirectCredit = "yes",
+    sortCodeBankName = Some("Test"),
+    iban = Some("test-iban")
+  )
+  
+  "BarsResponse" - {
+    "when read from JSON" - {
+      "should return a JsSuccess for valid JSON" in {
+        val fillerModel = BarsResponse("N/A", "N/A", "N/A", None, "N/A", "N/A", "N/A", "N/A", None, None)
+        val jsResult: JsResult[BarsResponse] = testJson.validate[BarsResponse]
+        jsResult shouldBe a[JsSuccess[_]]
+        jsResult.getOrElse(fillerModel) shouldBe testModel
+      }
+
+      "should return a JsError for invalid JSON" in {
+        val jsResult: JsResult[BarsResponse] = Json.parse(
+          """
+            |{
+            | "title": false
+            |}
+          """.stripMargin).validate[BarsResponse]
+        jsResult shouldBe a[JsError]
+      }
+    }
+
+    "when written to JSON" - {
+      "should return expected JSON" in {
+        val json: JsValue = Json.toJson(testModel)
+        json shouldBe testJson
+      }
+    }
+  }
 }

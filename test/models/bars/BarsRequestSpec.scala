@@ -17,7 +17,75 @@
 package models.bars
 
 import base.SpecBase
+import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue, Json}
 
 class BarsRequestSpec extends SpecBase {
 
+  private val testJson: JsValue = Json.parse(
+    """
+      |{
+      | "subject": {
+      |   "title": "Mr",
+      |   "name": "Taxwell Payer",
+      |   "firstName": "Taxwell",
+      |   "lastName": "Payer"
+      | },
+      | "account": {
+      |   "sortCode": "11-22-33",
+      |   "accountNumber": "12345678"
+      | }
+      |}
+    """.stripMargin)
+
+  private val testModel: BarsRequest = BarsRequest(
+    account = BarsAccount(
+      sortCode = "11-22-33",
+      accountNumber = "12345678"
+    ),
+    subject = BarsSubject(
+      title = Some("Mr"),
+      name = Some("Taxwell Payer"),
+      firstName = Some("Taxwell"),
+      lastName = Some("Payer")
+    )
+  )
+
+  "BarsRequest" - {
+    "when read from JSON" - {
+      "should return a JsSuccess for valid JSON" in {
+        val testFillerModel: BarsRequest = BarsRequest(
+          account = BarsAccount(
+            sortCode = "N/A",
+            accountNumber = "N/A"
+          ),
+          subject = BarsSubject(
+            title = None,
+            name = None,
+            firstName = None,
+            lastName = None
+          )
+        )
+        val jsResult: JsResult[BarsRequest] = testJson.validate[BarsRequest]
+        jsResult shouldBe a[JsSuccess[_]]
+        jsResult.getOrElse(testFillerModel) shouldBe testModel
+      }
+
+      "should return a JsError for invalid JSON" in {
+        val jsResult: JsResult[BarsRequest] = Json.parse(
+          """
+            |{
+            | "title": false
+            |}
+          """.stripMargin).validate[BarsRequest]
+        jsResult shouldBe a[JsError]
+      }
+    }
+
+    "when written to JSON" - {
+      "should return expected JSON" in {
+        val json: JsValue = Json.toJson(testModel)
+        json shouldBe testJson
+      }
+    }
+  }
 }

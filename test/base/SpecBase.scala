@@ -16,8 +16,20 @@
 
 package base
 
+import models.{CorrelationId, ResponseWrapper}
+import models.ResponseWrapper.ErrorWrapper
+import models.errors.ErrorResult
+import models.errors.ErrorResult.DownstreamErrorResult
 import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
+import play.api.http.Status.IM_A_TEAPOT
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 
-trait SpecBase extends AnyFreeSpec {
-
+trait SpecBase extends AnyFreeSpec with FutureAwaits with DefaultAwaitTimeout with Matchers {
+  val testCorrelationId: CorrelationId = CorrelationId("some-id")
+  
+  val dummyDownstreamErrorWrapper: ResponseWrapper[ErrorResult] = ErrorWrapper(
+    value = DownstreamErrorResult(IM_A_TEAPOT, "TEST_ERROR"),
+    correlationId = testCorrelationId
+  )
 }
