@@ -16,7 +16,7 @@
 
 package models.bars
 
-import play.api.libs.json.{Json, OFormat, OWrites}
+import play.api.libs.json.{Json, OWrites}
 
 case class ValidatedBarsRequest(account: BarsAccount, subject: BarsSubject)
 
