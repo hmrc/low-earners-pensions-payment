@@ -19,7 +19,7 @@ class RawBarsRequestSpec extends SpecBase {
       
       val result: JsResult[RawBarsRequest] = json.validate[RawBarsRequest] 
       result shouldBe a[JsSuccess[_]]
-      result.getOrElse(RawBarsRequest("N/A", "N/A", "N/A", None))
+      result.getOrElse(RawBarsRequest(None, None, None, None))
     }
 
     "should return a JsError when read from invalid JSON" in {
