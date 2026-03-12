@@ -18,10 +18,10 @@ package models.bars
 
 import play.api.libs.json.{Format, Json}
 
-case class BarsSubject(title: Option[String],
-                       name: Option[String],
-                       firstName: Option[String],
-                       lastName: Option[String])
+case class BarsSubject(title: Option[String] = None,
+                       name: Option[String] = None,
+                       firstName: Option[String] = None,
+                       lastName: Option[String] = None)
 
 object BarsSubject {
   implicit val format: Format[BarsSubject] = Json.format[BarsSubject]
