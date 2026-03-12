@@ -19,7 +19,8 @@ package models.bars
 import play.api.libs.json.{Format, Json}
 
 case class BarsAccount(sortCode: String,
-                       accountNumber: String)
+                       accountNumber: String,
+                       rollNumber: Option[String])
 
 object BarsAccount {
   implicit val format: Format[BarsAccount] = Json.format[BarsAccount]

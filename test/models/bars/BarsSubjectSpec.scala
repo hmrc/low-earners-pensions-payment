@@ -30,19 +30,12 @@ class BarsSubjectSpec extends SpecBase {
       |}
     """.stripMargin)
 
-  private val testModel: BarsSubject = BarsSubject(
-    title = Some("Mr"),
-    name = Some("Taxwell Payer"),
-    firstName = Some("Taxwell"),
-    lastName = Some("Payer")
-  )
-
   "BarsSubject" - {
     "when read from JSON" - {
       "should return a JsSuccess for valid JSON" in {
         val jsResult: JsResult[BarsSubject] = testJson.validate[BarsSubject]
         jsResult shouldBe a[JsSuccess[_]]
-        jsResult.getOrElse(BarsSubject(None, None, None, None)) shouldBe testModel
+        jsResult.getOrElse(BarsSubject(None, None, None, None)) shouldBe testBarsSubject
       }
 
       "should return a JsError for invalid JSON" in {
@@ -58,7 +51,7 @@ class BarsSubjectSpec extends SpecBase {
 
     "when written to JSON" - {
       "should return expected JSON" in {
-        val json: JsValue = Json.toJson(testModel)
+        val json: JsValue = Json.toJson(testBarsSubject)
         json shouldBe testJson
       }
     }

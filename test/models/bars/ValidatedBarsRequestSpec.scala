@@ -17,35 +17,31 @@
 package models.bars
 
 import base.SpecBase
-import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 
-class BarsAccountSpec extends SpecBase {
+class ValidatedBarsRequestSpec extends SpecBase {
+
   private val testJson: JsValue = Json.parse(
     """
       |{
-      | "sortCode": "11-22-33",
-      | "accountNumber": "12345678",
-      | "rollNumber": "abcdef/re"
+      | "subject": {
+      |   "title": "Mr",
+      |   "name": "Taxwell Payer",
+      |   "firstName": "Taxwell",
+      |   "lastName": "Payer"
+      | },
+      | "account": {
+      |   "sortCode": "11-22-33",
+      |   "accountNumber": "12345678",
+      |   "rollNumber": "abcdef/re"
+      | }
       |}
     """.stripMargin)
-  
-  "BarsAccount" - {
-    "when read from JSON" - {
-      "should return a JsSuccess for valid JSON" in {
-        val jsResult: JsResult[BarsAccount] = testJson.validate[BarsAccount]
-        jsResult shouldBe a[JsSuccess[_]]
-        jsResult.getOrElse(BarsAccount("N/A", "N/A", None)) shouldBe testBarsAccount
-      }
 
-      "should return a JsError for invalid JSON" in {
-        val jsResult: JsResult[BarsAccount] = JsObject.empty.validate[BarsAccount]
-        jsResult shouldBe a[JsError]
-      }
-    }
-
+  "BarsRequest" - {
     "when written to JSON" - {
       "should return expected JSON" in {
-        val json: JsValue = Json.toJson(testBarsAccount)
+        val json: JsValue = Json.toJson(testValidatedBarsRequest)
         json shouldBe testJson
       }
     }
