@@ -48,8 +48,8 @@ class BarsRequestValidator {
             subject = BarsSubject(
               name = Some(validatedRequest.name)
             )
-          )
-        ))
+          ))
+        )
       case JsError(errors) =>
         Left(ErrorWrapper(
           value = ServiceErrorResult(
@@ -61,16 +61,16 @@ class BarsRequestValidator {
         ))
     }
   }
-  
+
   private def assertFieldsExist(request: RawBarsRequest): Either[ValidationError, BarsRequestWithMandatoryFields] = {
     val nameOrError = assertMandatoryFieldExists(request.name, "/name")
     val accountNumberOrError = assertMandatoryFieldExists(request.accountNumber, "/accountNumber")
     val sortCodeOrError = assertMandatoryFieldExists(request.sortCode, "/sortCode")
-    
+
     (nameOrError, accountNumberOrError, sortCodeOrError) match {
       case (Right(name), Right(accountNumber), Right(sortCode)) =>
         Right(BarsRequestWithMandatoryFields(
-          name = name.trim, 
+          name = name.trim,
           sortCode = stripCharacters(sortCode, Seq("-")),
           accountNumber = accountNumber.trim,
           rollNumber = request.rollNumber.map(_.trim)
@@ -82,7 +82,7 @@ class BarsRequestValidator {
       )
     }
   }
-  
+
   private def assertFieldsFormat(request: BarsRequestWithMandatoryFields): Either[ValidationError, BarsRequestWithMandatoryFields] = {
     val errs: Seq[ValidationError] = Seq(
       validateNameFormat(request.name),
@@ -90,7 +90,7 @@ class BarsRequestValidator {
       validateSortCodeFormat(request.sortCode),
       request.rollNumber.flatMap(validateRollNumberFormat)
     ).flatten
-    
+
     errs match {
       case Nil => Right(request)
       case _ => Left(errs.reduce((err1, err2) => err1.add(err2)))

@@ -44,6 +44,24 @@ class BarsRequestValidatorSpec extends SpecBase {
   }
   
   "BarsRequestValidator" - {
+    "should return an error when JSON fails to parse" in new Test {
+      override val json: JsValue = Json.parse(
+        """
+          |{
+          | "name": false
+          |}
+          |""".stripMargin
+      )
+
+      result shouldBe a[Left[_, _]]
+      val error = ServiceErrorResult(
+        BAD_REQUEST,
+        "COULD_NOT_PARSE_REQUEST_JSON",
+        Some(Set("/name"))
+      )
+      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+    }
+    
     "should return an error when required fields are missing from request body" in new Test {
       override val json: JsValue = JsObject.empty
       result shouldBe a[Left[_, _]]
