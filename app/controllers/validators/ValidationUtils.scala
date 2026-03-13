@@ -1,6 +1,6 @@
 package controllers.validators
 
-import models.errors.{MultipleValidationErrors, SingleValidationError, ValidationError}
+import models.errors.{SingleValidationError, ValidationError}
 
 import scala.annotation.tailrec
 import scala.util.matching.Regex
@@ -9,7 +9,7 @@ object ValidationUtils {
 
   @tailrec
   def stripCharacters(field: String, characters: Seq[String]): String = characters match {
-    case Nil => field
+    case Nil => field.strip()
     case head :: tail => stripCharacters(field.replace(head, ""), tail)
   }
   

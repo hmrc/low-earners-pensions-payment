@@ -50,9 +50,9 @@ trait SpecBase extends AnyFreeSpec
   )
   
   val testBarsAccount: BarsAccount = BarsAccount(
-    sortCode = "11-22-33",
+    sortCode = "112233",
     accountNumber = "12345678",
-    rollNumber = Some("abcdef/re")
+    rollNumber = Some("rollNumber")
   )
   
   val testBarsSubject: BarsSubject = BarsSubject(
@@ -76,7 +76,10 @@ trait SpecBase extends AnyFreeSpec
     )
   )
   
-  val testValidatedBarsRequest: ValidatedBarsRequest = ValidatedBarsRequest(account = testBarsAccount, subject = testBarsSubject)
+  val testValidatedBarsRequest: ValidatedBarsRequest = ValidatedBarsRequest(
+    account = testBarsAccount, 
+    subject = BarsSubject(name = Some("Taxwell Payer"))
+  )
   
   val testBarsResponse: BarsResponse = BarsResponse(
     accountNumberIsWellFormatted = "yes",

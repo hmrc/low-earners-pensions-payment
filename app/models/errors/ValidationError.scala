@@ -22,7 +22,7 @@ sealed trait ValidationError {
 }
 
 case class SingleValidationError(code: String, paths: Set[String]) extends ValidationError {
-  def addSingleError(toAdd: SingleValidationError): ValidationError =
+  protected[errors] def addSingleError(toAdd: SingleValidationError): ValidationError =
     if (code == toAdd.code) {
       this.copy(paths = paths ++ toAdd.paths)
     } else {
@@ -51,7 +51,7 @@ case class MultipleValidationErrors(errs: Set[SingleValidationError]) extends Va
     )
   }
 
-  def addErrors(errsToAdd: Set[SingleValidationError]): MultipleValidationErrors = {
+  protected[errors] def addErrors(errsToAdd: Set[SingleValidationError]): MultipleValidationErrors = {
     val combinedErrs: Set[SingleValidationError] = errs ++ errsToAdd
     MultipleValidationErrors(combinedErrs).withFlattenedErrors
   }

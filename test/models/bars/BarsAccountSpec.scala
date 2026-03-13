@@ -23,9 +23,9 @@ class BarsAccountSpec extends SpecBase {
   private val testJson: JsValue = Json.parse(
     """
       |{
-      | "sortCode": "11-22-33",
+      | "sortCode": "112233",
       | "accountNumber": "12345678",
-      | "rollNumber": "abcdef/re"
+      | "rollNumber": "rollNumber"
       |}
     """.stripMargin)
   

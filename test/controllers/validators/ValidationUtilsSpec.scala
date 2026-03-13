@@ -17,6 +17,10 @@ class ValidationUtilsSpec extends SpecBase {
     "should do nothing if supplied characters are not in a string" in {
       stripCharacters("ABCDEFG", Seq("3", "4")) shouldBe "ABCDEFG"
     }
+
+    "should remove leading and trailing whitespace" in {
+      stripCharacters("    ABCDEFG    ", Nil) shouldBe "ABCDEFG"
+    }
   }
   
   "assertMandatoryFieldExists" - {
