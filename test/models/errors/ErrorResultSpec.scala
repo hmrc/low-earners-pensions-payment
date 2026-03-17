@@ -80,16 +80,14 @@ class ErrorResultSpec extends SpecBase {
         val errorResult: ErrorResult = NpsErrorResult(
           status = BAD_REQUEST,
           code = "A_CODE",
-          apiName = "retrieve",
-          pathsOpt = Some(Set("path1", "path2"))
+          apiName = "retrieve"
         )
         
         Json.toJson(errorResult) shouldBe Json.parse(
           """
             |{
             | "code": "A_CODE",
-            | "source": "NPS - retrieve",
-            | "paths": ["path1", "path2"]
+            | "source": "NPS - retrieve"
             |}
           """.stripMargin
         )

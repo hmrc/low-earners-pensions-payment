@@ -22,24 +22,20 @@ import play.api.libs.json.*
 enum ErrorResult(val source: String) {
   val status: Int
   val code: String
-  val pathsOpt: Option[Set[String]]
-  val errorsOpt: Option[Seq[ErrorResult]]
+  val pathsOpt: Option[Set[String]] = None
+  val errorsOpt: Option[Seq[ErrorResult]] = None
 
   case ServiceErrorResult(status: Int,
                           code: String,
-                          pathsOpt: Option[Set[String]] = None,
-                          errorsOpt: Option[Seq[ServiceErrorResult]] = None) extends ErrorResult("SERVICE")
-
-  case BarsErrorResult(status: Int,
-                       code: String,
-                       pathsOpt: Option[Set[String]] = None,
-                       errorsOpt: Option[Seq[BarsErrorResult]] = None) extends ErrorResult("BARS")
-
+                          override val pathsOpt: Option[Set[String]] = None,
+                          override val errorsOpt: Option[Seq[ServiceErrorResult]] = None) extends ErrorResult("SERVICE")
+  
   case NpsErrorResult(status: Int,
                       code: String,
                       apiName: String,
-                      pathsOpt: Option[Set[String]] = None,
-                      errorsOpt: Option[Seq[NpsErrorResult]] = None) extends ErrorResult(s"NPS - $apiName")
+                      override val errorsOpt: Option[Seq[NpsErrorResult]] = None) extends ErrorResult(s"NPS - $apiName")
+
+  case BarsErrorResult(status: Int, code: String) extends ErrorResult("BARS - Verify Personal")
 }
 
 object ErrorResult {
