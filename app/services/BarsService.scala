@@ -19,10 +19,16 @@ package services
 import com.google.inject.{Inject, Singleton}
 import connectors.{BarsConnector, ConnectorResponse}
 import models.CorrelationId
-import models.bars.{BarsRequest, BarsResponse}
+import models.bars.{ValidatedBarsRequest, BarsResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class BarsService @Inject()(connector: BarsConnector) {
-  def checkBankAccountDetails(barsRequest: BarsRequest, correlationId: CorrelationId): ConnectorResponse[BarsResponse] =
+  def checkBankAccountDetails(barsRequest: ValidatedBarsRequest, correlationId: CorrelationId)
+                             (implicit hc: HeaderCarrier, ec: ExecutionContext): ConnectorResponse[BarsResponse] = {
+    // If we want to do any mapping/ auditing of the BARS request I imagine we will do it here
     connector.checkBankAccountDetails(barsRequest, correlationId)
+  }
 }

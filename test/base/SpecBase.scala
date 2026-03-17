@@ -16,7 +16,7 @@
 
 package base
 
-import models.ResponseWrapper.ErrorWrapper
+import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
 import models.bars.{BarsAccount, BarsResponse, BarsSubject, ValidatedBarsRequest}
 import models.errors.ErrorResult
 import models.errors.ErrorResult.{DownstreamErrorResult, ServiceErrorResult}
@@ -38,13 +38,18 @@ trait SpecBase extends AnyFreeSpec
   
   val testCorrelationId: CorrelationId = CorrelationId("some-id")
   implicit val dummyHeaderCarrier: HeaderCarrier = HeaderCarrier()
+  
+  val dummyErrorWrapper: ErrorWrapper = ErrorWrapper(
+    value = ServiceErrorResult(IM_A_TEAPOT, "FOOBAR"),
+    correlationId = testCorrelationId
+  )
 
-  val dummyServiceErrorWrapper: ResponseWrapper[ErrorResult] = ErrorWrapper(
+  val testServiceErrorWrapper: ErrorWrapper = ErrorWrapper(
     value = ServiceErrorResult(IM_A_TEAPOT, "TEST_ERROR"),
     correlationId = testCorrelationId
   )
   
-  val dummyDownstreamErrorWrapper: ResponseWrapper[ErrorResult] = ErrorWrapper(
+  val testDownstreamErrorWrapper: ErrorWrapper = ErrorWrapper(
     value = DownstreamErrorResult(IM_A_TEAPOT, "TEST_ERROR"),
     correlationId = testCorrelationId
   )
@@ -94,6 +99,11 @@ trait SpecBase extends AnyFreeSpec
     iban = Some("iban")
   )
   
+  val testSuccessResponse: SuccessWrapper[BarsResponse] = SuccessWrapper[BarsResponse](
+    value = testBarsResponse,
+    correlationId = testCorrelationId
+  )
+  
   val dummyBarsResponse: BarsResponse = BarsResponse(
     accountNumberIsWellFormatted = "N/A",
     accountExists = "N/A",
@@ -105,6 +115,11 @@ trait SpecBase extends AnyFreeSpec
     sortCodeSupportsDirectCredit = "N/A",
     sortCodeBankName = Some("N/A"),
     iban = Some("N/A")
+  )
+  
+  val dummySuccessResponse: ResponseWrapper[BarsResponse] = SuccessWrapper(
+    value = dummyBarsResponse,
+    correlationId = testCorrelationId
   )
 
 }
