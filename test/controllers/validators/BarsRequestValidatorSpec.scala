@@ -59,7 +59,7 @@ class BarsRequestValidatorSpec extends SpecBase {
         "COULD_NOT_PARSE_REQUEST_JSON",
         Some(Set("/name"))
       )
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should return an error when required fields are missing from request body" in new Test {
@@ -70,7 +70,7 @@ class BarsRequestValidatorSpec extends SpecBase {
         "REQUEST_MISSING_MANDATORY_FIELD",
         Some(Set("/name", "/accountNumber", "/sortCode"))
       )
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should return an error when account number field has incorrect format" in new Test {
@@ -86,7 +86,7 @@ class BarsRequestValidatorSpec extends SpecBase {
       )
       result shouldBe a[Left[_, _]]
       val error = ServiceErrorResult(BAD_REQUEST, "REQUEST_PARAMETER_FAILED_PATTERN_VALIDATION", Some(Set("/accountNumber")))
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should return an error when sort code field has incorrect format" in new Test {
@@ -102,7 +102,7 @@ class BarsRequestValidatorSpec extends SpecBase {
       )
       result shouldBe a[Left[_, _]]
       val error = ServiceErrorResult(BAD_REQUEST, "REQUEST_PARAMETER_FAILED_PATTERN_VALIDATION", Some(Set("/sortCode")))
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should return an error when roll number field has incorrect format" in new Test {
@@ -118,7 +118,7 @@ class BarsRequestValidatorSpec extends SpecBase {
       )
       result shouldBe a[Left[_, _]]
       val error = ServiceErrorResult(BAD_REQUEST, "REQUEST_PARAMETER_FAILED_PATTERN_VALIDATION", Some(Set("/rollNumber")))
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should return an error when name field has incorrect format" in new Test {
@@ -134,7 +134,7 @@ class BarsRequestValidatorSpec extends SpecBase {
       )
       result shouldBe a[Left[_, _]]
       val error = ServiceErrorResult(BAD_REQUEST, "REQUEST_PARAMETER_FAILED_PATTERN_VALIDATION", Some(Set("/name")))
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should handle multiple format errors" in new Test {
@@ -154,7 +154,7 @@ class BarsRequestValidatorSpec extends SpecBase {
         code = "REQUEST_PARAMETER_FAILED_PATTERN_VALIDATION",
         pathsOpt = Some(Set("/name", "/sortCode", "/accountNumber", "/rollNumber"))
       )
-      result.swap.getOrElse(dummyServiceErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
+      result.swap.getOrElse(dummyErrorWrapper) shouldBe ErrorWrapper(error, testCorrelationId)
     }
     
     "should return ValidatedBarsRequest for a valid request" in new Test {

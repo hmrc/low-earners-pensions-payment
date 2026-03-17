@@ -25,8 +25,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.{HeaderNames, Status}
 import play.api.http.Status.IM_A_TEAPOT
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits, ResultExtractors}
 import uk.gov.hmrc.http.HeaderCarrier
 
 trait SpecBase extends AnyFreeSpec
@@ -34,7 +35,10 @@ trait SpecBase extends AnyFreeSpec
   with ScalaFutures
   with MockitoSugar 
   with FutureAwaits
-  with DefaultAwaitTimeout {
+  with DefaultAwaitTimeout
+  with HeaderNames
+  with Status
+  with ResultExtractors {
   
   val testCorrelationId: CorrelationId = CorrelationId("some-id")
   implicit val dummyHeaderCarrier: HeaderCarrier = HeaderCarrier()

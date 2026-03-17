@@ -18,12 +18,16 @@ package models.errors
 
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.*
+import play.api.mvc.Result
+import play.api.mvc.Results.Status
 
 enum ErrorResult(val source: String) {
   val status: Int
   val code: String
   val pathsOpt: Option[Set[String]] = None
   val errorsOpt: Option[Seq[ErrorResult]] = None
+  
+  def toResult: Result = new Status(status)(Json.toJson(this))
 
   case ServiceErrorResult(status: Int,
                           code: String,
