@@ -16,19 +16,56 @@
 
 package models.errors
 
-import play.api.libs.json.{JsString, Json, OWrites}
+import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.*
 
 enum ErrorResult(val source: String) {
   val status: Int
   val code: String
-  
-  case ServiceErrorResult(status: Int, code: String) extends ErrorResult("SERVICE")
-  case DownstreamErrorResult(status: Int, code: String) extends ErrorResult("DOWNSTREAM")
+  val pathsOpt: Option[Set[String]]
+  val errorsOpt: Option[Seq[ErrorResult]]
+
+  case ServiceErrorResult(status: Int,
+                          code: String,
+                          pathsOpt: Option[Set[String]] = None,
+                          errorsOpt: Option[Seq[ServiceErrorResult]] = None) extends ErrorResult("SERVICE")
+
+  case BarsErrorResult(status: Int,
+                       code: String,
+                       pathsOpt: Option[Set[String]] = None,
+                       errorsOpt: Option[Seq[BarsErrorResult]] = None) extends ErrorResult("BARS")
+
+  case NpsErrorResult(status: Int,
+                      code: String,
+                      apiName: String,
+                      pathsOpt: Option[Set[String]] = None,
+                      errorsOpt: Option[Seq[NpsErrorResult]] = None) extends ErrorResult(s"NPS - $apiName")
 }
 
 object ErrorResult {
-  implicit val writes: OWrites[ErrorResult] = (o: ErrorResult) => Json.obj(
+  protected[errors] def baseWrites(o: ErrorResult): JsObject = Json.obj(
     "code" -> JsString(o.code),
     "source" -> JsString(o.source)
-  )
+  ) ++ o.pathsOpt
+    .fold(JsObject.empty)(somePaths =>
+      if (somePaths.isEmpty) {
+        JsObject.empty
+      } else {
+        Json.obj("paths" -> JsArray(somePaths.map(JsString(_)).toSeq))
+      }
+    )
+
+  implicit val writes: OWrites[ErrorResult] = (o: ErrorResult) =>
+    baseWrites(o) ++
+      o.errorsOpt
+        .fold(JsObject.empty)(someErrors => {
+          if (someErrors.isEmpty) {
+            JsObject.empty
+          } else {
+            Json.obj("errors" -> JsArray(someErrors.map(baseWrites)))
+          }
+        })
+
+  val failedToParseError: ErrorResult = ServiceErrorResult(INTERNAL_SERVER_ERROR, "FAILED_TO_PARSE_DOWNSTREAM_RESPONSE")
+  val internalError: ErrorResult = ServiceErrorResult(INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR")
 }

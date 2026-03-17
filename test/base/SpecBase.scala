@@ -19,9 +19,9 @@ package base
 import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
 import models.bars.{BarsAccount, BarsResponse, BarsSubject, ValidatedBarsRequest}
 import models.errors.ErrorResult
-import models.errors.ErrorResult.{DownstreamErrorResult, ServiceErrorResult}
+import models.errors.ErrorResult.{BarsErrorResult, NpsErrorResult, ServiceErrorResult}
 import models.{CorrelationId, ResponseWrapper}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -50,7 +50,7 @@ trait SpecBase extends AnyFreeSpec
   )
   
   val testDownstreamErrorWrapper: ErrorWrapper = ErrorWrapper(
-    value = DownstreamErrorResult(IM_A_TEAPOT, "TEST_ERROR"),
+    value = BarsErrorResult(IM_A_TEAPOT, "TEST_ERROR"),
     correlationId = testCorrelationId
   )
   
