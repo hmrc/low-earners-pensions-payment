@@ -21,8 +21,19 @@ import models.errors.ErrorResult.{NpsErrorResult, ServiceErrorResult, baseWrites
 import play.api.http.Status.{BAD_REQUEST, IM_A_TEAPOT}
 import play.api.libs.json.Json
 
+import scala.concurrent.Future
+
 class ErrorResultSpec extends SpecBase {
   "ErrorResult" - {
+    "toResult" - {
+      "should return the expected result" in {
+        val errorResult: ErrorResult = ServiceErrorResult(BAD_REQUEST, "A_CODE", None, None)
+        val futureResult = Future.successful(errorResult.toResult)
+        status(futureResult) shouldBe BAD_REQUEST
+        contentAsJson(futureResult).toString should include("A_CODE")
+      }
+    }
+    
     "baseWrites" - {
       "should return the expected JSON when paths field doesn't exist" in {
         val errorResult: ErrorResult = ServiceErrorResult(BAD_REQUEST, "A_CODE", None, None)
