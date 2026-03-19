@@ -34,19 +34,19 @@ class CorrelationIdHandlerSpec extends SpecBase {
       )
       
       "should invoke block when correlation ID exists and is mandatory" in {
-        val result: Future[Result] = new CorrelationIdMandatory().handle(idToRequest(Some("id")))(block)
+        val result: Future[Result] = new CorrelationIdMandatory().handleCorrelationId(idToRequest(Some("id")))(block)
         status(result) shouldBe OK
         contentAsString(result) should include("id")
       }
 
       "should invoke block when correlation ID exists and is optional" in {
-        val result: Future[Result] = new CorrelationIdOptional().handle(idToRequest(Some("id")))(block)
+        val result: Future[Result] = new CorrelationIdOptional().handleCorrelationId(idToRequest(Some("id")))(block)
         status(result) shouldBe OK
         contentAsString(result) should include("id")
       }
 
       "should return error when correlation ID is required and doesn't exist" in {
-        val result: Future[Result] = new CorrelationIdMandatory().handle(idToRequest(None))(block)
+        val result: Future[Result] = new CorrelationIdMandatory().handleCorrelationId(idToRequest(None))(block)
         status(result) shouldBe BAD_REQUEST
         contentAsString(result) should include("CORRELATION_ID_HEADER_MISSING")
       }
@@ -56,7 +56,7 @@ class CorrelationIdHandlerSpec extends SpecBase {
           override protected[utils] def generateCorrelationId: CorrelationId = CorrelationId("generatedId")
         }
         
-        val result: Future[Result] = handler.handle(idToRequest(None))(block)
+        val result: Future[Result] = handler.handleCorrelationId(idToRequest(None))(block)
         status(result) shouldBe OK
         contentAsString(result) should include("generatedId")
       }

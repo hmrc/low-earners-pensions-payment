@@ -30,7 +30,7 @@ import utils.{CorrelationIdKey, CorrelationIdOptional}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class BarsController @Inject()(identifierAction: IdentifierAction[CorrelationIdOptional],
+class BarsController @Inject()(identifierAction: IdentifierAction,
                                validator: BarsRequestValidator,
                                service: BarsService,
                                cc: ControllerComponents)(implicit ec: ExecutionContext) extends BackendController(cc) {

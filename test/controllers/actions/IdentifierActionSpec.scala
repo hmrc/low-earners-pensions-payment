@@ -43,11 +43,10 @@ class IdentifierActionSpec extends SpecBase {
     
     val idHandler: CorrelationIdHandler = new CorrelationIdOptional()
 
-    lazy val testIdentifierAction: IdentifierActionImpl[CorrelationIdHandler] = new IdentifierActionImpl(
+    lazy val testIdentifierAction: IdentifierActionImpl = new IdentifierActionImpl(
       authConnector = mockAuthConnector,
       config = mockAppConfig,
-      parser = BodyParsers.Default(stubPlayBodyParsers(NoMaterializer)),
-      correlationIdHandler = idHandler
+      parser = BodyParsers.Default(stubPlayBodyParsers(NoMaterializer))
     )
     
     when(mockAppConfig.confidenceLevelMinimum).thenReturn(L250)

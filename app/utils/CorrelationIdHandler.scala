@@ -28,7 +28,7 @@ import scala.concurrent.Future
 sealed class CorrelationIdHandler(correlationIdMandatory: Boolean) {
   protected[utils] def generateCorrelationId: CorrelationId = CorrelationId(UUID.randomUUID().toString)
   
-  def handle[A](request: Request[A])(block: CorrelationId => Future[Result]): Future[Result] =
+  def handleCorrelationId[A](request: Request[A])(block: CorrelationId => Future[Result]): Future[Result] =
     request.headers.get(CorrelationIdKey.value) match {
     case Some(value) => block(CorrelationId(value))
     case None if correlationIdMandatory => Future.successful(

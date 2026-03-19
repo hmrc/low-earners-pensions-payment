@@ -29,7 +29,7 @@ class AppConfig @Inject()(config: Configuration):
 
   val appName: String = config.get[String]("appName")
   
-  private val barsBaseUrl: String = servicesConfig.baseUrl("nps")
+  private val barsBaseUrl: String = servicesConfig.baseUrl("bars")
   private val barsPersonalAccountUrl: String = config.get[String]("microservice.services.bars.verifyPersonalAccountUrl")
   val verifyPersonalAccountUrl: String = barsBaseUrl + barsPersonalAccountUrl
   

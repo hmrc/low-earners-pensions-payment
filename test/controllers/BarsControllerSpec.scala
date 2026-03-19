@@ -42,7 +42,7 @@ class BarsControllerSpec extends SpecBase {
 
   trait Test {
     val idHandler: CorrelationIdOptional = CorrelationIdOptional()
-    lazy val mockIdentifierAction: IdentifierAction[CorrelationIdOptional] = new MockIdentifierAction(idHandler)
+    lazy val mockIdentifierAction: IdentifierAction = new MockIdentifierAction(idHandler)
       
     val mockValidator: BarsRequestValidator = mock[BarsRequestValidator]
     val mockService: BarsService = mock[BarsService]

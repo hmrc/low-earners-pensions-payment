@@ -28,30 +28,31 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import utils.{CorrelationIdHandler, PtaEnrolmentKey}
+import utils.{CorrelationIdHandler, CorrelationIdOptional, PtaEnrolmentKey}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-@ImplementedBy(classOf[IdentifierActionImpl[_]])
-trait IdentifierAction[T <: CorrelationIdHandler] extends ActionBuilder[AuthorisedRequest, AnyContent]
+@ImplementedBy(classOf[IdentifierActionImpl])
+trait IdentifierAction extends ActionBuilder[AuthorisedRequest, AnyContent]
 
 @Singleton
-class IdentifierActionImpl[T <: CorrelationIdHandler] @Inject()(override val authConnector: AuthConnector,
-                                                                config: AppConfig,
-                                                                val parser: BodyParsers.Default,
-                                                                correlationIdHandler: T)
-                                                               (implicit override val executionContext: ExecutionContext)
-  extends IdentifierAction[T] with AuthorisedFunctions {
-  override def invokeBlock[A](request: Request[A],
-                              block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
+class IdentifierActionImpl @Inject()(override val authConnector: AuthConnector,
+                                     config: AppConfig,
+                                     val parser: BodyParsers.Default)
+                                    (implicit override val executionContext: ExecutionContext)
+  extends IdentifierAction with AuthorisedFunctions {
+  val correlationIdHandler: CorrelationIdOptional = CorrelationIdOptional()
+  
+  def invokeBlock[A](request: Request[A],
+                     block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
     def errorResponse(status: Int, code: String): Future[Result] = Future.successful(
       ServiceErrorResult(status = status, code = code).toResult
     )
-    
+
     // TODO - We might need to check here that the 'nino' isn't a TRN or determine a way to check for TRN users otherwise
-    correlationIdHandler.handle(request){correlationId =>
+    correlationIdHandler.handleCorrelationId(request) { correlationId =>
       authorised(Enrolment(PtaEnrolmentKey.value))
         .retrieve(Retrievals.nino and Retrievals.confidenceLevel) {
           case Some(nino) ~ confidenceLevel =>

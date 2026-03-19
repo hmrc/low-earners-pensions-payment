@@ -24,10 +24,10 @@ import utils.CorrelationIdHandler
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MockIdentifierAction[C <: CorrelationIdHandler](handler: C) extends IdentifierAction[C] with SpecBase {
+class MockIdentifierAction[C <: CorrelationIdHandler](handler: C) extends IdentifierAction with SpecBase {
   override def invokeBlock[A](request: Request[A],
                               block: AuthorisedRequest[A] => Future[Result]): Future[Result] =
-    handler.handle(request) { correlationId =>
+    handler.handleCorrelationId(request) { correlationId =>
       block(
         AuthorisedRequest(
           request = request,
