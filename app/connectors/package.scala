@@ -16,9 +16,11 @@
 
 import cats.data.EitherT
 import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
+import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 
 package object connectors {
+  type DownstreamResponse[R] = Either[ErrorWrapper, SuccessWrapper[R]]
   type ConnectorResponse[R] = EitherT[Future, ErrorWrapper, SuccessWrapper[R]]
 }
