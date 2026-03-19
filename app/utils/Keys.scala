@@ -19,3 +19,4 @@ package utils
 case class Key(value: String)
 
 object CorrelationIdKey extends Key("correlationId")
+object PtaEnrolmentKey extends Key("HMRC-PI")

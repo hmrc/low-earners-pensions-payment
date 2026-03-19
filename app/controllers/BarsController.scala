@@ -23,14 +23,14 @@ import controllers.validators.BarsRequestValidator
 import models.{CorrelationId, ResponseWrapper}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, Result}
-import services.{BarsService, CorrelationIdService}
+import services.BarsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.CorrelationIdKey
+import utils.{CorrelationIdKey, CorrelationIdOptional}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class BarsController @Inject()(identifierAction: IdentifierAction,
+class BarsController @Inject()(identifierAction: IdentifierAction[CorrelationIdOptional],
                                validator: BarsRequestValidator,
                                service: BarsService,
                                cc: ControllerComponents)(implicit ec: ExecutionContext) extends BackendController(cc) {

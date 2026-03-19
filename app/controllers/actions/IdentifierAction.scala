@@ -17,20 +17,54 @@
 package controllers.actions
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import models.auth.IdentifierRequest
+import config.AppConfig
+import models.auth.{AuthorisedRequest, Nino, UserDetails}
+import models.errors.ErrorResult
+import models.errors.ErrorResult.ServiceErrorResult
+import play.api.http.Status.{INTERNAL_SERVER_ERROR, UNAUTHORIZED}
 import play.api.mvc.*
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import utils.{CorrelationIdHandler, PtaEnrolmentKey}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-@ImplementedBy(classOf[IdentifierActionImpl])
-trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent]
+@ImplementedBy(classOf[IdentifierActionImpl[_]])
+trait IdentifierAction[T <: CorrelationIdHandler] extends ActionBuilder[AuthorisedRequest, AnyContent]
 
 @Singleton
-class IdentifierActionImpl @Inject()(override val authConnector: AuthConnector,
-                                     val parser: BodyParsers.Default)
-                                    (implicit override val executionContext: ExecutionContext)
-  extends IdentifierAction with AuthorisedFunctions {
+class IdentifierActionImpl[T <: CorrelationIdHandler] @Inject()(override val authConnector: AuthConnector,
+                                                                config: AppConfig,
+                                                                val parser: BodyParsers.Default,
+                                                                correlationIdHandler: T)
+                                                               (implicit override val executionContext: ExecutionContext)
+  extends IdentifierAction[T] with AuthorisedFunctions {
   override def invokeBlock[A](request: Request[A],
-                              block: IdentifierRequest[A] => Future[Result]): Future[Result] = ???
+                              block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+
+    def errorResponse(status: Int, code: String): Future[Result] = Future.successful(
+      ServiceErrorResult(status = status, code = code).toResult
+    )
+    
+    correlationIdHandler.handle(request){correlationId =>
+      authorised(Enrolment(PtaEnrolmentKey.value))
+        .retrieve(Retrievals.nino and Retrievals.confidenceLevel) {
+          case Some(nino) ~ confidenceLevel =>
+            if (confidenceLevel >= config.confidenceLevelMinimum) {
+              block(AuthorisedRequest(request, correlationId, UserDetails(Nino(nino))))
+            } else {
+              errorResponse(UNAUTHORIZED, "INSUFFICIENT_CONFIDENCE_LEVEL")
+            }
+          case _ => errorResponse(UNAUTHORIZED, "NO_NINO_FOUND_FOR_USER")
+        } recoverWith {
+        case _: NoActiveSession => errorResponse(UNAUTHORIZED, "NO_ACTIVE_SESSION")
+        case _: InsufficientEnrolments => errorResponse(UNAUTHORIZED, "MISSING_PTA_ENROLMENT")
+        case _: AuthorisationException => errorResponse(INTERNAL_SERVER_ERROR, "AUTHORISATION_FAILED")
+      }
+    }
+  }
 }

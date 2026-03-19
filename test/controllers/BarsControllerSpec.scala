@@ -32,7 +32,8 @@ import play.api.libs.json.{JsObject, JsValue}
 import play.api.mvc.{ControllerComponents, Headers, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{POST, stubControllerComponents}
-import services.{BarsService, CorrelationIdService}
+import services.BarsService
+import utils.CorrelationIdOptional
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -40,12 +41,14 @@ import scala.concurrent.Future
 class BarsControllerSpec extends SpecBase {
 
   trait Test {
-    val mockIdentifierAction: IdentifierAction = new MockIdentifierAction
+    val idHandler: CorrelationIdOptional = CorrelationIdOptional()
+    lazy val mockIdentifierAction: IdentifierAction[CorrelationIdOptional] = new MockIdentifierAction(idHandler)
+      
     val mockValidator: BarsRequestValidator = mock[BarsRequestValidator]
     val mockService: BarsService = mock[BarsService]
     val mockControllerComponents: ControllerComponents = stubControllerComponents()
 
-    val testController: BarsController = new BarsController(
+    lazy val testController: BarsController = new BarsController(
       identifierAction = mockIdentifierAction,
       validator = mockValidator,
       service = mockService,
@@ -61,25 +64,25 @@ class BarsControllerSpec extends SpecBase {
 
     lazy val result: Future[Result] = testController.checkBankAccountDetails()(request)
     
-    def validatorSuccess(): OngoingStubbing[Either[ErrorWrapper, ValidatedBarsRequest]] = when(
+    def validatorSuccess(correlationId: CorrelationId = testCorrelationId): OngoingStubbing[Either[ErrorWrapper, ValidatedBarsRequest]] = when(
       mockValidator.validate(
         json = ArgumentMatchers.eq(JsObject.empty),
-        correlationId = ArgumentMatchers.eq(CorrelationId("some-id"))
+        correlationId = ArgumentMatchers.eq(correlationId)
       )
     ).thenReturn(
       Right(testValidatedBarsRequest)
     )
     
-    def serviceSuccess(): OngoingStubbing[ConnectorResponse[BarsResponse]] = when(
+    def serviceSuccess(correlationId: CorrelationId = testCorrelationId): OngoingStubbing[ConnectorResponse[BarsResponse]] = when(
       mockService.checkBankAccountDetails(
         ArgumentMatchers.eq(testValidatedBarsRequest),
-        ArgumentMatchers.eq(testCorrelationId)
+        ArgumentMatchers.eq(correlationId)
       )(
         ArgumentMatchers.any(),
         ArgumentMatchers.any()
       )
     ).thenReturn(
-      EitherT(Future.successful(Right(testSuccessResponse)))
+      EitherT(Future.successful(Right(testSuccessResponse.copy(correlationId = correlationId))))
     )
   }
 
@@ -129,6 +132,26 @@ class BarsControllerSpec extends SpecBase {
         
         status(result) shouldBe OK
         contentAsJson(result).toString should include("banky bank")
+      }
+
+      "should generate a correlation ID if one doesn't exist" in new Test {
+        override val idHandler: CorrelationIdOptional = new CorrelationIdOptional {
+          override def generateCorrelationId: CorrelationId = CorrelationId("generatedId")
+        }
+
+        override val request: FakeRequest[JsValue] = FakeRequest[JsValue](
+          method = POST,
+          uri = "some-uri",
+          headers = Headers(),
+          body = JsObject.empty
+        )
+
+        validatorSuccess(CorrelationId("generatedId"))
+        serviceSuccess(CorrelationId("generatedId"))
+
+        status(result) shouldBe OK
+        contentAsJson(result).toString should include("banky bank")
+        headers(result).get("correlationId") shouldBe Some("generatedId")
       }
     }
   }

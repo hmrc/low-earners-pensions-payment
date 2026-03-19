@@ -17,6 +17,8 @@
 package config
 
 import play.api.Configuration
+import uk.gov.hmrc.auth.core.ConfidenceLevel
+import uk.gov.hmrc.auth.core.ConfidenceLevel.L250
 
 import javax.inject.{Inject, Singleton}
 
@@ -24,3 +26,9 @@ import javax.inject.{Inject, Singleton}
 class AppConfig @Inject()(config: Configuration):
 
   val appName: String = config.get[String]("appName")
+  val barsUrl = ""
+  
+  val confidenceLevelMinimum: ConfidenceLevel =
+    ConfidenceLevel
+    .fromInt(config.get[Int]("confidenceLevelMinimum"))
+    .getOrElse(L250)
