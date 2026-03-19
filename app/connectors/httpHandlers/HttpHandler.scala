@@ -21,16 +21,16 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import connectors.DownstreamResponse
 import models.ResponseWrapper.{ErrorWrapper, HttpResponseWrapper, SuccessWrapper}
 import models.errors.ErrorResult
-import models.errors.ErrorResult.{ServiceErrorResult, failedToParseError, internalError}
+import models.errors.ErrorResult.failedToParseError
 import models.{CorrelationId, ResponseWrapper}
 import play.api.libs.json.*
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 
 trait HttpHandler[Resp: OFormat] {
   type HttpResult = Either[ErrorWrapper, HttpResponseWrapper]
+  
   def correlationIdHandler[A](httpResponse: HttpResponse): HttpResult
   def statusHandler(method: String, url: String, response: HttpResponseWrapper): HttpResult
-  
   val errorMap: ErrorResult => ErrorResult = err => err
 
   protected[httpHandlers] def validateBody(method: String,
@@ -59,9 +59,7 @@ trait HttpHandler[Resp: OFormat] {
       correlationIdResult <- correlationIdHandler(response)
       statusResult <- statusHandler(method, url, correlationIdResult)
       bodyResult <- validateBody(method, url, statusResult)
-    } yield {
-      bodyResult
-    }
+    } yield bodyResult
 
     result match {
       case Left(err) => Left(ErrorWrapper(errorMap(err.value), err.correlationId))

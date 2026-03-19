@@ -86,7 +86,7 @@ class HttpHandlerSpec extends SpecBase {
         result.getOrElse(SuccessWrapper(TestClass("N/A"), testCorrelationId)) shouldBe expectedResult
       }
     }
-    
+
     "httpReads" - {
       "should return an error when correlationIdHandler returns an error" in {
         val result: DownstreamResponse[TestClass] = TestObject.httpReads.read("N/A", "N/A", HttpResponse(OK, ""))
@@ -97,10 +97,10 @@ class HttpHandlerSpec extends SpecBase {
       "should return an error when statusHandler returns an error" in {
         val result: DownstreamResponse[TestClass] = TestObject.httpReads.read(
           method = "N/A",
-          url = "N/A", 
+          url = "N/A",
           response = HttpResponse(BAD_REQUEST, "", Map("correlationId" -> Seq("id")))
         )
-        
+
         result shouldBe a[Left[_, _]]
         result.swap.getOrElse(dummyErrorWrapper).value shouldBe ServiceErrorResult(IM_A_TEAPOT, "TEAPOT_TIME")
       }
@@ -115,7 +115,7 @@ class HttpHandlerSpec extends SpecBase {
         result shouldBe a[Left[_, _]]
         result.swap.getOrElse(dummyErrorWrapper).value shouldBe failedToParseError
       }
-      
+
       "should return a success response when checks pass" in {
         val result: DownstreamResponse[TestClass] = TestObject.httpReads.read(
           method = "N/A",
