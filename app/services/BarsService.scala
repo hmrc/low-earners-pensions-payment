@@ -19,7 +19,7 @@ package services
 import com.google.inject.{Inject, Singleton}
 import connectors.{BarsConnector, ConnectorResponse}
 import models.CorrelationId
-import models.bars.{ValidatedBarsRequest, BarsResponse}
+import models.bars.{BarsResponse, ValidatedBarsRequest}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext

@@ -19,14 +19,14 @@ package base
 import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
 import models.bars.{BarsAccount, BarsResponse, BarsSubject, ValidatedBarsRequest}
 import models.errors.ErrorResult
-import models.errors.ErrorResult.{BarsErrorResult, NpsErrorResult, ServiceErrorResult}
+import models.errors.ErrorResult.{BarsErrorResult, ServiceErrorResult}
 import models.{CorrelationId, ResponseWrapper}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.{HeaderNames, Status}
 import play.api.http.Status.IM_A_TEAPOT
+import play.api.http.{HeaderNames, Status}
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits, ResultExtractors}
 import uk.gov.hmrc.http.HeaderCarrier
 

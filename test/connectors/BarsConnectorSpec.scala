@@ -20,28 +20,26 @@ import base.SpecBase
 import config.AppConfig
 import models.ResponseWrapper
 import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
-import models.bars.{ValidatedBarsRequest, BarsResponse}
-import models.errors.ErrorResult.{BarsErrorResult, internalError}
+import models.bars.{BarsResponse, ValidatedBarsRequest}
+import models.errors.ErrorResult.BarsErrorResult
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
 import org.mockito.stubbing.OngoingStubbing
-import org.scalatest.BeforeAndAfterEach
-import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.JsValue
 import play.api.test.Helpers.await
-import uk.gov.hmrc.http.{GatewayTimeoutException, HeaderCarrier, HttpReads}
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
+import uk.gov.hmrc.http.{GatewayTimeoutException, HeaderCarrier}
 
 import java.net.URL
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 class BarsConnectorSpec extends SpecBase {
   trait Test {
     type BarsResult = DownstreamResponse[BarsResponse]
     
     val mockConfig: AppConfig = mock[AppConfig]
-    when(mockConfig.barsUrl).thenReturn("http://dummyUrl/bars")
+    when(mockConfig.verifyPersonalAccountUrl).thenReturn("http://dummyUrl/bars")
     
     val mockHttpClient: HttpClientV2 = mock[HttpClientV2]
     val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]

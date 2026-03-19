@@ -23,9 +23,9 @@ import models.errors.ErrorResult
 import models.errors.ErrorResult.ServiceErrorResult
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, UNAUTHORIZED}
 import play.api.mvc.*
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.{CorrelationIdHandler, PtaEnrolmentKey}
@@ -50,6 +50,7 @@ class IdentifierActionImpl[T <: CorrelationIdHandler] @Inject()(override val aut
       ServiceErrorResult(status = status, code = code).toResult
     )
     
+    // TODO - We might need to check here that the 'nino' isn't a TRN or determine a way to check for TRN users otherwise
     correlationIdHandler.handle(request){correlationId =>
       authorised(Enrolment(PtaEnrolmentKey.value))
         .retrieve(Retrievals.nino and Retrievals.confidenceLevel) {

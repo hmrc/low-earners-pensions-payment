@@ -16,7 +16,6 @@
 
 import cats.data.EitherT
 import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
-import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 

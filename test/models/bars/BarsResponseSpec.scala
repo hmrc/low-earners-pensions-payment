@@ -17,7 +17,7 @@
 package models.bars
 
 import base.SpecBase
-import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue, Json}
+import play.api.libs.json.*
 
 class BarsResponseSpec extends SpecBase {
   private val testJson: JsValue = Json.parse(

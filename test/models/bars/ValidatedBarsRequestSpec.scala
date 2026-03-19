@@ -25,15 +25,12 @@ class ValidatedBarsRequestSpec extends SpecBase {
     """
       |{
       | "subject": {
-      |   "title": "Mr",
-      |   "name": "Taxwell Payer",
-      |   "firstName": "Taxwell",
-      |   "lastName": "Payer"
+      |   "name": "Taxwell Payer"
       | },
       | "account": {
-      |   "sortCode": "11-22-33",
+      |   "sortCode": "112233",
       |   "accountNumber": "12345678",
-      |   "rollNumber": "abcdef/re"
+      |   "rollNumber": "rollNumber"
       | }
       |}
     """.stripMargin)

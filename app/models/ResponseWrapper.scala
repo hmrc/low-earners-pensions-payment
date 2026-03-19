@@ -17,12 +17,8 @@
 package models
 
 import models.errors.ErrorResult
-import play.api.http.Status.OK
-import play.api.libs.json.{Json, OWrites}
-import play.api.mvc.Result
-import play.api.mvc.Results.{Ok, Status}
+import play.api.libs.json.OWrites
 import uk.gov.hmrc.http.HttpResponse
-import utils.CorrelationIdKey
 
 enum ResponseWrapper[T] {
   val value: T

@@ -19,14 +19,19 @@ package config
 import play.api.Configuration
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L250
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.{Inject, Singleton}
 
 @Singleton
 class AppConfig @Inject()(config: Configuration):
+  private val servicesConfig = ServicesConfig(config)
 
   val appName: String = config.get[String]("appName")
-  val barsUrl = ""
+  
+  private val barsBaseUrl: String = servicesConfig.baseUrl("nps")
+  private val barsPersonalAccountUrl: String = config.get[String]("microservice.services.bars.verifyPersonalAccountUrl")
+  val verifyPersonalAccountUrl: String = barsBaseUrl + barsPersonalAccountUrl
   
   val confidenceLevelMinimum: ConfidenceLevel =
     ConfidenceLevel

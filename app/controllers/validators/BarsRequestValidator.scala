@@ -17,12 +17,12 @@
 package controllers.validators
 
 import com.google.inject.Singleton
-import models.ResponseWrapper.ErrorWrapper
-import models.bars.{BarsAccount, BarsRequestWithMandatoryFields, BarsSubject, RawBarsRequest, ValidatedBarsRequest}
 import controllers.validators.ValidationUtils.*
 import models.CorrelationId
-import models.errors.{ErrorResult, ValidationError}
+import models.ResponseWrapper.ErrorWrapper
+import models.bars.*
 import models.errors.ErrorResult.ServiceErrorResult
+import models.errors.{ErrorResult, ValidationError}
 import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.{JsError, JsSuccess, JsValue}
 

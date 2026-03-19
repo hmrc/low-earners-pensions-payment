@@ -27,9 +27,9 @@ import play.api.mvc.Results.Ok
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.stubPlayBodyParsers
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L250
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
-import uk.gov.hmrc.auth.core.*
 import utils.{CorrelationIdHandler, CorrelationIdMandatory, CorrelationIdOptional}
 
 import scala.concurrent.ExecutionContext.Implicits.global
