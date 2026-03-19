@@ -16,11 +16,31 @@
 
 package connectors
 
-import models.bars.{BarsRequest, BarsResponse}
-import com.google.inject.Singleton
-import models.CorrelationId
+import models.bars.{ValidatedBarsRequest, BarsResponse}
+import com.google.inject.{Inject, Singleton}
+import config.AppConfig
+import models.{CorrelationId, ResponseWrapper}
+import models.ResponseWrapper.{ErrorWrapper, SuccessWrapper}
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.client.HttpClientV2
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
+import cats.data.EitherT
+import connectors.httpHandlers.BarsHttpHandler
+
+import java.net.URI
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class BarsConnector extends HttpHandler[BarsResponse] {
-  def checkBankAccountDetails(request: BarsRequest, correlationId: CorrelationId): ConnectorResponse[BarsResponse] = ???
+class BarsConnector @Inject()(config: AppConfig,
+                              httpClient: HttpClientV2) extends BarsHttpHandler {
+
+  def checkBankAccountDetails(request: ValidatedBarsRequest, correlationId: CorrelationId)
+                             (implicit hc: HeaderCarrier, ec: ExecutionContext): ConnectorResponse[BarsResponse] =
+    EitherT(
+      httpClient
+        .post(URI.create(config.barsUrl).toURL)
+        .withBody(Json.toJson(request))
+        .execute[DownstreamResponse[BarsResponse]] 
+    )
 }
