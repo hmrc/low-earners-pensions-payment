@@ -47,7 +47,9 @@ class IdentifierActionSpec extends SpecBase {
       authConnector = mockAuthConnector,
       config = mockAppConfig,
       parser = BodyParsers.Default(stubPlayBodyParsers(NoMaterializer))
-    )
+    ) {
+      override val correlationIdHandler: CorrelationIdHandler = idHandler
+    }
     
     when(mockAppConfig.confidenceLevelMinimum).thenReturn(L250)
 

@@ -41,7 +41,7 @@ class IdentifierActionImpl @Inject()(override val authConnector: AuthConnector,
                                      val parser: BodyParsers.Default)
                                     (implicit override val executionContext: ExecutionContext)
   extends IdentifierAction with AuthorisedFunctions {
-  val correlationIdHandler: CorrelationIdOptional = CorrelationIdOptional()
+  val correlationIdHandler: CorrelationIdHandler = CorrelationIdOptional()
   
   def invokeBlock[A](request: Request[A],
                      block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {

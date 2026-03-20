@@ -40,6 +40,6 @@ class BarsConnector @Inject()(config: AppConfig,
       httpClient
         .post(URI.create(config.verifyPersonalAccountUrl).toURL)
         .withBody(Json.toJson(request))
-        .execute[DownstreamResponse[BarsResponse]] 
+        .execute[DownstreamResponse[BarsResponse]]
     )
 }

@@ -25,7 +25,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, Result}
 import services.BarsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.{CorrelationIdKey, CorrelationIdOptional}
+import utils.CorrelationIdKey
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -35,9 +35,10 @@ class BarsHttpHandler extends HttpHandler[BarsResponse]{
       value = BarsErrorResult(INTERNAL_SERVER_ERROR, code),
       correlationId = response.correlationId
     ))
-    
+
     response.value.status match {
       case OK => Right(response)
+      //TODO - As of right now the redirects are just followed by default so this line does nothing
       case MOVED_PERMANENTLY | SEE_OTHER | TEMPORARY_REDIRECT => errorResponse("BARS_RETURNED_REDIRECT")
       case BAD_REQUEST => errorResponse("ERROR_IN_BARS_REQUEST")
       case FORBIDDEN | NOT_FOUND => errorResponse("COULD_NOT_ACCESS_BARS_RESOURCE")
