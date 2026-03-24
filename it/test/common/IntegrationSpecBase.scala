@@ -53,7 +53,8 @@ class IntegrationSpecBase extends AnyWordSpec
       )
       .configure(
         "microservice.services.bars.port" -> wireMockPort,
-        "microservice.services.bars.host" -> wireMockHost
+        "microservice.services.bars.host" -> wireMockHost,
+        "microservice.services.bars.env" -> "local"
       )
       .build()
   }

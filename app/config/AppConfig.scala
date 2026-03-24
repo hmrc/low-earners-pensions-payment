@@ -28,10 +28,10 @@ class AppConfig @Inject()(config: Configuration):
   private val servicesConfig = ServicesConfig(config)
 
   val appName: String = config.get[String]("appName")
-  
+
   private val barsBaseUrl: String = servicesConfig.baseUrl("bars")
-  private val barsPersonalAccountUrl: String = config.get[String]("microservice.services.bars.verifyPersonalAccountUrl")
-  val verifyPersonalAccountUrl: String = barsBaseUrl + barsPersonalAccountUrl
+  private val barsEnv: String = config.get("microservice.services.bars.env")
+  def barsUrl: String = barsBaseUrl + (if(barsEnv == "local") "" else "/bank-account-reputation")
   
   val confidenceLevelMinimum: ConfidenceLevel =
     ConfidenceLevel

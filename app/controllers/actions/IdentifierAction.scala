@@ -21,6 +21,7 @@ import config.AppConfig
 import models.auth.{AuthorisedRequest, Nino, UserDetails}
 import models.errors.ErrorResult
 import models.errors.ErrorResult.ServiceErrorResult
+import play.api.Logging
 import play.api.http.Status.{INTERNAL_SERVER_ERROR, UNAUTHORIZED}
 import play.api.mvc.*
 import uk.gov.hmrc.auth.core.*
@@ -40,12 +41,12 @@ class IdentifierActionImpl @Inject()(override val authConnector: AuthConnector,
                                      config: AppConfig,
                                      val parser: BodyParsers.Default)
                                     (implicit override val executionContext: ExecutionContext)
-  extends IdentifierAction with AuthorisedFunctions {
+  extends IdentifierAction with AuthorisedFunctions with Logging {
   val correlationIdHandler: CorrelationIdHandler = CorrelationIdOptional()
   
   def invokeBlock[A](request: Request[A],
                      block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     def errorResponse(status: Int, code: String): Future[Result] = Future.successful(
       ServiceErrorResult(status = status, code = code).toResult
@@ -63,7 +64,10 @@ class IdentifierActionImpl @Inject()(override val authConnector: AuthConnector,
             }
           case _ => errorResponse(UNAUTHORIZED, "NO_NINO_FOUND_FOR_USER")
         } recoverWith {
-        case _: NoActiveSession => errorResponse(UNAUTHORIZED, "NO_ACTIVE_SESSION")
+        case err: NoActiveSession =>
+          logger.error(request.headers.headers.mkString(";"))
+          logger.error(err.toString)
+          errorResponse(UNAUTHORIZED, "NO_ACTIVE_SESSION")
         case _: InsufficientEnrolments => errorResponse(UNAUTHORIZED, "MISSING_PTA_ENROLMENT")
         case _: AuthorisationException => errorResponse(INTERNAL_SERVER_ERROR, "AUTHORISATION_FAILED")
       }

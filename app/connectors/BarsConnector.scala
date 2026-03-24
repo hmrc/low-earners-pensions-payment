@@ -38,7 +38,7 @@ class BarsConnector @Inject()(config: AppConfig,
                              (implicit hc: HeaderCarrier, ec: ExecutionContext): ConnectorResponse[BarsResponse] =
     EitherT(
       httpClient
-        .post(URI.create(config.verifyPersonalAccountUrl).toURL)
+        .post(URI.create(s"${config.barsUrl}/verify/personal").toURL)
         .withBody(Json.toJson(request))
         .execute[DownstreamResponse[BarsResponse]]
     )

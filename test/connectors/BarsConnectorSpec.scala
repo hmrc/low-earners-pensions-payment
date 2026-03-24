@@ -38,7 +38,7 @@ class BarsConnectorSpec extends SpecBase {
     type BarsResult = DownstreamResponse[BarsResponse]
     
     val mockConfig: AppConfig = mock[AppConfig]
-    when(mockConfig.verifyPersonalAccountUrl).thenReturn("http://dummyUrl/bars")
+    when(mockConfig.barsUrl).thenReturn("http://dummyUrl/bars")
     
     val mockHttpClient: HttpClientV2 = mock[HttpClientV2]
     val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]

@@ -112,7 +112,7 @@ class BarsControllerIntegrationSpec extends IntegrationSpecBase {
             )
 
             stubPost(
-              url = "/bank-account-reputation/verify/personal",
+              url = "/verify/personal",
               requestBody = requestJson.toString,
               response = aResponse.withStatus(responseStatus)
             )
@@ -166,7 +166,7 @@ class BarsControllerIntegrationSpec extends IntegrationSpecBase {
           )
 
           stubPost(
-            url = "/bank-account-reputation/verify/personal",
+            url = "/verify/personal",
             requestBody = requestJson.toString,
             response = aResponse.withStatus(OK).withBody("not json")
           )
@@ -224,7 +224,7 @@ class BarsControllerIntegrationSpec extends IntegrationSpecBase {
             """.stripMargin
 
             stubPost(
-              url = "/bank-account-reputation/verify/personal",
+              url = "/verify/personal",
               requestBody = requestJson.toString,
               response = aResponse.withStatus(OK).withBody(responseBody)
             )
