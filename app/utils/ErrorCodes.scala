@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.lowearnerspensionspayment.controllers
+package utils
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+object ErrorCodes {
 
-import javax.inject.{Inject, Singleton}
-
-@Singleton()
-class MicroserviceHelloWorldController @Inject()(
-  cc: ControllerComponents
-) extends BackendController(cc):
-
-  val hello: Action[AnyContent] =
-    Action:
-      implicit request =>
-        Ok("Hello world")
+  val REDACTED = "REDACTED"
+  val BAD_REQUEST_ERROR = "BAD_REQUEST"
+  val FORBIDDEN_ERROR = "FORBIDDEN"
+  val NOT_FOUND_ERROR = "NOT_FOUND"
+  val UNPROCESSABLE_ENTITY_ERROR = "NOT_FOUND"
+  val INTERNAL_ERROR = "INTERNAL_ERROR"
+  val SERVICE_UNAVAILABLE_ERROR = "SERVICE_UNAVAILABLE"
+  val NO_MATCH_ERROR = "NO_MATCH"
+  val EMPTY_DATA_ERROR = "EMPTY_DATA"
+  val UNEXPECTED_STATUS_ERROR = "UNEXPECTED_STATUS_ERROR"
+}

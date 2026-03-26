@@ -1,8 +1,13 @@
 import uk.gov.hmrc.DefaultBuildSettings
 
-ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "3.3.6"
-ThisBuild / scalacOptions += "-Wconf:msg=Flag.*repeatedly:s"
+inThisBuild(
+  List(
+    scalaVersion := "3.3.7",
+    majorVersion := 0,
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
+  )
+)
 
 lazy val microservice = Project("low-earners-pensions-payment", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
@@ -33,4 +38,4 @@ lazy val it = project
     Test / unmanagedResourceDirectories += baseDirectory.value / "it" / "test" / "resources"
   )
 
-addCommandAlias("testc", "; clean ; coverage ; test ; it/test ; coverageReport ;")
+addCommandAlias("runAllTests", "; clean ; coverage ; test ; it/test ; coverageReport ;")

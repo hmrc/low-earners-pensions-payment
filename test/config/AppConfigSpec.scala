@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.lowearnerspensionspayment
+package config
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import base.UnitBaseSpec
 
-import java.time.Clock
+class AppConfigSpec extends UnitBaseSpec {
 
-class Module extends AppModule:
+  val appConfig: AppConfig = injected[AppConfig]
 
-  override def bindings(
-    environment  : Environment,
-    configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
-    Nil
+  "FrontEndAppConfig" - {
+    "have appName" in {
+      appConfig.appName must be("low-earners-pensions-payment")
+    }
+    "have host" in {
+      appConfig.host must be("http://localhost:7504")
+    }
+
+    "have confidenceLevel" in {
+      appConfig.confidenceLevel.level must be(250)
+    }
+  }
+}
