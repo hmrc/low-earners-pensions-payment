@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
 import controllers.requests.{CorrelationId, RequestWithCorrelationId}
 import models.errors.{InternalLeppError, InvalidBearerTokenError, MissingCorrelationIdError, UnauthorisedError}
@@ -33,12 +33,15 @@ import utils.{Constants, HeaderKey, Logging}
 
 import scala.concurrent.{ExecutionContext, Future}
 
+@ImplementedBy(classOf[AuthIdentifierAction])
+trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent]
+
 @Singleton
-class IdentifierAction @Inject()(override val authConnector: AuthConnector,
-                                              config: AppConfig,
-                                              playBodyParsers: BodyParsers.Default)
-                                             (implicit override val executionContext: ExecutionContext)
-  extends ActionBuilder[IdentifierRequest, AnyContent] with AuthorisedFunctions with Logging:
+class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
+                                 config: AppConfig,
+                                 playBodyParsers: BodyParsers.Default)
+                                 (implicit override val executionContext: ExecutionContext)
+  extends IdentifierAction with AuthorisedFunctions with Logging:
 
   private[actions] def handleWithCorrelationId[A](
                                                    request: Request[A],
@@ -66,7 +69,6 @@ class IdentifierAction @Inject()(override val authConnector: AuthConnector,
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
     handleWithCorrelationId(request, logContext) { req =>
-      val idLogString = correlationIdLogString(req.correlationId)
 
       authorised(Enrolment(Constants.ptaEnrolmentKey))
         .retrieve(Retrievals.internalId and Retrievals.nino and Retrievals.confidenceLevel and Retrievals.authorisedEnrolments) {
@@ -74,21 +76,22 @@ class IdentifierAction @Inject()(override val authConnector: AuthConnector,
             if (confidenceLevel >= config.confidenceLevel) {
               block(IdentifierRequest(request, AuthUser.apply(internalId, nino), req.correlationId))
             } else {
-              infoLog(logContext, s"User has insufficient confidence level, not authorised to use this service with correlationId: $idLogString")
+              infoLog(logContext, s"User has insufficient confidence level, not authorised to use this service" +
+                s" with correlationId: ${req.correlationId.value}")
               throw InsufficientConfidenceLevel("Confidence Level is less than 250")
             }
           case _ =>
-            infoLog(logContext, s"User doesn't have PTA enrolment, not authorised to access this service with correlationId: $idLogString")
+            infoLog(logContext, s"User doesn't have PTA enrolment, not authorised to access this service with correlationId: ${req.correlationId.value}")
             throw InsufficientEnrolments("User has insufficient PTA enrolments")
         } recoverWith {
         case ex: MissingBearerToken =>
-          warnLog("invokeBlock", s"Authorisation bearer token could not be found for correlationId: $idLogString due to ${ex.getMessage}")
+          warnLog("invokeBlock", s"Authorisation bearer token could not be found for correlationId: ${req.correlationId.value} due to ${ex.getMessage}")
           Future.successful(Unauthorized(Json.toJson(InvalidBearerTokenError)))
         case ex: AuthorisationException =>
-          warnLog("invokeBlock", s"An authorisation error occurred  for correlationId: $idLogString due to ${ex.getMessage}")
+          warnLog("invokeBlock", s"An authorisation error occurred  for correlationId: ${req.correlationId.value} due to ${ex.getMessage}")
           Future.successful(Unauthorized(Json.toJson(UnauthorisedError)))
         case _: UnauthorizedException =>
-          errorLog("invokeBlock", s"An unexpected authorisation error occurred for correlationId: $idLogString")
+          errorLog("invokeBlock", s"An unexpected authorisation error occurred for correlationId: ${req.correlationId.value}")
           Future.successful(InternalServerError(Json.toJson(InternalLeppError)))
       }
     }

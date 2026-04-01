@@ -43,13 +43,11 @@ class GetPaymentDetailsController @Inject()(
 
     implicit val requestCorrelationId: CorrelationId = request.correlationId
 
-    def idLogString: String = correlationIdLogString(requestCorrelationId)
-
     val result =
       for {
         response <- connector.retrieveDetails(request.user.nino.value)
       } yield {
-        infoLog(s"[GetPaymentDetailsController - $methodLoggingContext] ", s"Successfully received payment details with correlationId $idLogString")
+        infoLog(s"[GetPaymentDetailsController - $methodLoggingContext] ", s"Successfully received payment details with correlationId $requestCorrelationId")
         Ok(Json.toJson(response.responseData)).withHeaders(correlationIdKey -> response.correlationId.value)
       }
 
@@ -57,7 +55,7 @@ class GetPaymentDetailsController @Inject()(
 
       val errorResponse = errorWrapper.error.code match {
         case BAD_REQUEST_ERROR => BadRequest(Json.toJson(errorWrapper.error))
-        case NOT_FOUND_ERROR | NO_MATCH_ERROR | EMPTY_DATA_ERROR => NotFound(Json.toJson(errorWrapper.error))
+        case NOT_FOUND_ERROR => NotFound(Json.toJson(errorWrapper.error))
         case FORBIDDEN_ERROR => Forbidden(Json.toJson(errorWrapper.error))
         case _ => InternalServerError(Json.toJson(errorWrapper.error))
       }

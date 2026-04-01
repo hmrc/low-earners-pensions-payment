@@ -33,7 +33,7 @@ object LeppError {
 
 object UnauthorisedError
     extends LeppError(
-      code = "CLIENT_OR_AGENT_NOT_AUTHORISED",
+      code = "USER_NOT_AUTHORISED",
       message = "The client and/or agent is not authorised"
     )
 
@@ -60,3 +60,9 @@ object UnexpectedStatusError
       code = "UNEXPECTED_STATUS_ERROR",
       message = "An unexpected status code was returned from downstream"
     )
+
+object NotFoundError
+  extends LeppError(
+    code = "NOT_FOUND",
+    message = "Details not found"
+  )

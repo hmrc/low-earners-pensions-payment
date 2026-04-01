@@ -16,17 +16,11 @@
 
 package utils
 
-import controllers.requests.CorrelationId
 import play.api.Logger
 
 trait Logging {
   private val primaryContext: String = this.getClass.getSimpleName.replace("$", "")
   protected lazy val logger: Logger = Logger(primaryContext)
-
-  private def formatStringOpt(valueOpt: Option[String]): String = valueOpt.fold("")(value => " " + value)
-
-  protected def correlationIdLogString(correlationId: CorrelationId, requestContext: Option[String] = None): String =
-    s" for${formatStringOpt(requestContext)} request with correlationId: ${correlationId.value}"
 
   def infoLog(context: String, message: String): Unit = logger.info(s"$context : $message")
   def warnLog(context: String, message: String): Unit = logger.warn(s"$context : $message")

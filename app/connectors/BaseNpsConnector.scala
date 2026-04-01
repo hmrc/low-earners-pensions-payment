@@ -82,16 +82,14 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
   ): ReadsResponse[Rds] = {
     val methodLoggingContext: String = "[jsonValidation]"
 
-    val idLogString: String = correlationIdLogString(correlationId)
-
     try {
       val responseJson: JsValue = Json.parse(body)
 
       responseJson.validate[Rds] match {
         case JsSuccess(value, _) =>
-          logger.info(s"$methodLoggingContext - $extraContext :: Successfully received payment details with correlationId - $idLogString")
           Right[ErrorWrapper, ResponseWrapper[Rds]](ResponseWrapper(correlationId, value)).withLeft
         case JsError(errors) =>
+          logger.error(s"$extraContext - $methodLoggingContext: Json validation failed")
           Left(ErrorWrapper(correlationId, InternalLeppError))
       }
     } catch {
@@ -111,8 +109,6 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
   ): ErrorWrapper = {
     val methodLoggingContext: String = "handleErrorResponse"
 
-    val idLogString: String = correlationIdLogString(correlationId)
-
     errorMap.get(response.status) match {
       case Some(errorCode) =>
         val errorMessage: String = upstreamResponseMessage(
@@ -121,15 +117,10 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
           status = response.status,
           responseBody = ""
         )
-        logger.error(s"$methodLoggingContext - $extraContext :: $errorMessage with correlationId - $idLogString")
+        logger.error(s"$methodLoggingContext - $extraContext :: $errorMessage with correlationId - ${correlationId.value}")
         ErrorWrapper(correlationId, LeppError(errorCode, errorMessage))
       case None =>
         ErrorWrapper(correlationId, UnexpectedStatusError)
     }
   }
 }
-
-class UnrecognisedHttpResponseException(method: String, url: String, response: HttpResponse)
-    extends Exception(
-      s"$method to $url failed with unexpected status ${response.status}"
-    )

@@ -18,7 +18,7 @@ package models.requests
 
 import uk.gov.hmrc.domain.Nino
 
-final case class AuthUser(
+case class AuthUser(
                          userId: String,
                          nino: Nino
                          )
