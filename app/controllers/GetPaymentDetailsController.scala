@@ -47,7 +47,8 @@ class GetPaymentDetailsController @Inject()(
       for {
         response <- connector.retrieveDetails(request.user.nino.value)
       } yield {
-        infoLog(s"[GetPaymentDetailsController - $methodLoggingContext] ", s"Successfully received payment details with correlationId $requestCorrelationId")
+        infoLog(s"[GetPaymentDetailsController - $methodLoggingContext] ",
+          s"Successfully received payment details with correlationId $requestCorrelationId")
         Ok(Json.toJson(response.responseData)).withHeaders(correlationIdKey -> response.correlationId.value)
       }
 

@@ -35,7 +35,7 @@ package controllers.actions
 import base.UnitBaseSpec
 import com.google.inject.Inject
 import config.AppConfig
-import models.errors.{InvalidBearerTokenError, UnauthorisedError}
+import models.errors.{InternalLeppError, InvalidBearerTokenError, UnauthorisedError}
 import models.requests.{AuthUser, IdentifierRequest}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -100,14 +100,14 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
     when(mockAuthConnector.authorise[A](any(), any())(any(), any()))
       .thenReturn(value)
 
-  "AuthenticateIdentifierAction" - {
+  "AuthIdentifierAction" - {
     val fakeRequestWithCorrelationId = FakeRequest().withHeaders("correlationId" -> "x-id")
 
     "throw an exception" - {
       "when any unhandled exception occurs" in runningApplication { _ =>
         setAuthValue(Future.failed(new RuntimeException("Authorise predicate fails")))
         val result: Future[Result] = handler.run(fakeRequestWithCorrelationId)
-        assertThrows[RuntimeException](await(result))
+        contentAsJson(result) mustBe Json.toJson(InternalLeppError)
       }
 
       "when authorise fails to match predicate" in runningApplication { _ =>
@@ -123,7 +123,7 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
         redirectLocation(result) mustBe None
         contentAsJson(result) mustBe Json.toJson(InvalidBearerTokenError)
       }
-
+      
       "when user does not have an Internal Id" in runningApplication { _ =>
         setAuthValue(authResult(None, Some("AA123456C"), L250, ptaEnrolment))
         val result = handler.run(fakeRequestWithCorrelationId)

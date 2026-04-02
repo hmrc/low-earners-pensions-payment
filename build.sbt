@@ -3,9 +3,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 inThisBuild(
   List(
     scalaVersion := "3.3.7",
-    majorVersion := 0,
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
+    majorVersion := 0
   )
 )
 
@@ -24,7 +22,19 @@ lazy val microservice = Project("low-earners-pensions-payment", file("."))
     "-Wconf:msg=Flag.*repeatedly:s",
     "-Wconf:src=routes/.*:s")
   )
-  .settings(CodeCoverageSettings.settings *)
+  .settings(CodeCoverageSettings())
+
+lazy val commonScalacOptions = Seq(
+  "-unchecked",
+  "-deprecation",
+  "-feature",
+  "-Werror",
+  "-Wconf:msg=unused&src=routes/.*:s",
+  "-language:noAutoTupling",
+  "-Wvalue-discard",
+  "-Xfatal-warnings",
+  "-Wconf:msg=Flag.*repeatedly:s"
+)
 
 lazy val it = project
   .in(file("it"))

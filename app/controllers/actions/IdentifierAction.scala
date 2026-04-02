@@ -27,7 +27,7 @@ import play.api.mvc.Results.{InternalServerError, Unauthorized}
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
-import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import utils.{Constants, HeaderKey, Logging}
 
@@ -74,14 +74,16 @@ class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
         .retrieve(Retrievals.internalId and Retrievals.nino and Retrievals.confidenceLevel and Retrievals.authorisedEnrolments) {
           case Some(internalId) ~ Some(nino) ~ confidenceLevel ~ enrolments if hasEnrolments(enrolments) =>
             if (confidenceLevel >= config.confidenceLevel) {
+              infoLog(logContext, s"User is authorised to access the LEPP service" +
+                s" with correlationId: ${req.correlationId.value}")
               block(IdentifierRequest(request, AuthUser.apply(internalId, nino), req.correlationId))
             } else {
-              infoLog(logContext, s"User has insufficient confidence level, not authorised to use this service" +
+              warnLog(logContext, s"User has insufficient confidence level, not authorised to use this service" +
                 s" with correlationId: ${req.correlationId.value}")
               throw InsufficientConfidenceLevel("Confidence Level is less than 250")
             }
           case _ =>
-            infoLog(logContext, s"User doesn't have PTA enrolment, not authorised to access this service with correlationId: ${req.correlationId.value}")
+            warnLog(logContext, s"User doesn't have PTA enrolment, not authorised to access this service with correlationId: ${req.correlationId.value}")
             throw InsufficientEnrolments("User has insufficient PTA enrolments")
         } recoverWith {
         case ex: MissingBearerToken =>
@@ -90,8 +92,8 @@ class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
         case ex: AuthorisationException =>
           warnLog("invokeBlock", s"An authorisation error occurred  for correlationId: ${req.correlationId.value} due to ${ex.getMessage}")
           Future.successful(Unauthorized(Json.toJson(UnauthorisedError)))
-        case _: UnauthorizedException =>
-          errorLog("invokeBlock", s"An unexpected authorisation error occurred for correlationId: ${req.correlationId.value}")
+        case _@ex =>
+          errorLog("invokeBlock", s"An unexpected authorisation error occurred for correlationId: ${req.correlationId.value} - ${ex.getMessage}")
           Future.successful(InternalServerError(Json.toJson(InternalLeppError)))
       }
     }

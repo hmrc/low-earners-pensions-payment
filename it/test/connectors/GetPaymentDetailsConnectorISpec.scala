@@ -75,6 +75,24 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           .error
           .code mustBe "UNEXPECTED_STATUS_ERROR"
       }
+      
+      "[retrieveDetails] should return NOT_FOUND_ERROR when NPS returns an notfound status code" in new Test {
+        stubGet(
+          url = npsUrl,
+          response = aResponse().withStatus(NOT_FOUND).withHeader(correlationId.value, "X-123")
+        )
+
+        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+          await(connector.retrieveDetails(nino).value)
+
+        WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
+
+        result mustBe a[Left[_, _]]
+        result.swap
+          .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
+          .error
+          .code mustBe "NOT_FOUND"
+      }
 
       "[retrieveDetails] should return the expected result when NPS returns an unparsable OK response" in new Test {
         stubGet(
@@ -161,7 +179,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
       "[retrieveDetails] should handle appropriately when correlation ID is non-matching for a success" in new Test {
         stubGet(
           url = npsUrl,
-          response = okJson(responseJsonString).withHeader("correlationId", "nonMatching")
+          response = okJson(responseJsonString).withHeader("correlationId", "NotMatching")
         )
 
         val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =

@@ -60,9 +60,3 @@ object UnexpectedStatusError
       code = "UNEXPECTED_STATUS_ERROR",
       message = "An unexpected status code was returned from downstream"
     )
-
-object NotFoundError
-  extends LeppError(
-    code = "NOT_FOUND",
-    message = "Details not found"
-  )
