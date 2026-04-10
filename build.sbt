@@ -15,13 +15,7 @@ lazy val microservice = Project("low-earners-pensions-payment", file("."))
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 7504
   )
-  .settings(scalacOptions ++= Seq(
-    "-feature",
-    "-deprecation",
-    "-Wconf:msg=unused import&src=conf/.*:s",
-    "-Wconf:msg=Flag.*repeatedly:s",
-    "-Wconf:src=routes/.*:s")
-  )
+  .settings(scalacOptions ++= commonScalacOptions)
   .settings(CodeCoverageSettings())
 
 lazy val commonScalacOptions = Seq(
@@ -31,7 +25,6 @@ lazy val commonScalacOptions = Seq(
   "-Werror",
   "-Wconf:msg=unused&src=routes/.*:s",
   "-language:noAutoTupling",
-  "-Wvalue-discard",
   "-Xfatal-warnings",
   "-Wconf:msg=Flag.*repeatedly:s"
 )

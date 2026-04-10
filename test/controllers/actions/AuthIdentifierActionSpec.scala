@@ -35,7 +35,7 @@ package controllers.actions
 import base.UnitBaseSpec
 import com.google.inject.Inject
 import config.AppConfig
-import models.errors.{InternalLeppError, InvalidBearerTokenError, UnauthorisedError}
+import models.errors.{InvalidBearerTokenError, UnauthorisedError}
 import models.requests.{AuthUser, IdentifierRequest}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -83,9 +83,8 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
   
   def authResult(internalId: Option[String],
                  nino: Option[String],
-                 confidenceLevel: ConfidenceLevel,
-                 enrolments: Enrolment*): Option[String] ~ Option[String] ~ ConfidenceLevel ~ Enrolments =
-    internalId and nino and confidenceLevel and Enrolments(enrolments.toSet)
+                 confidenceLevel: ConfidenceLevel): Option[String] ~ Option[String] ~ ConfidenceLevel =
+    internalId and nino and confidenceLevel
 
   val ptaEnrolment: Enrolment =
     Enrolment(Constants.ptaEnrolmentKey, Seq(EnrolmentIdentifier("Some_Id", "A2100001")), "Activated")
@@ -93,7 +92,7 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
   val invalidEnrolment: Enrolment =
     Enrolment("INVALID", Seq.empty, "Activated")
 
-  def setAuthValue(value: Option[String] ~ Option[String] ~ ConfidenceLevel ~ Enrolments): Unit =
+  def setAuthValue(value: Option[String] ~ Option[String] ~ ConfidenceLevel): Unit =
     setAuthValue(Future.successful(value))
 
   def setAuthValue[A](value: Future[A]): Unit =
@@ -104,13 +103,7 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
     val fakeRequestWithCorrelationId = FakeRequest().withHeaders("correlationId" -> "x-id")
 
     "throw an exception" - {
-      "when any unhandled exception occurs" in runningApplication { _ =>
-        setAuthValue(Future.failed(new RuntimeException("Authorise predicate fails")))
-        val result: Future[Result] = handler.run(fakeRequestWithCorrelationId)
-        contentAsJson(result) mustBe Json.toJson(InternalLeppError)
-      }
-
-      "when authorise fails to match predicate" in runningApplication { _ =>
+      "when an AuthorisationException occurs" in runningApplication { _ =>
         setAuthValue(Future.failed(new AuthorisationException("Authorise predicate fails") {}))
         val result = handler.run(fakeRequestWithCorrelationId)
         redirectLocation(result) mustBe None
@@ -125,20 +118,20 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
       }
       
       "when user does not have an Internal Id" in runningApplication { _ =>
-        setAuthValue(authResult(None, Some("AA123456C"), L250, ptaEnrolment))
+        setAuthValue(authResult(None, Some("AA123456C"), L250))
         val result = handler.run(fakeRequestWithCorrelationId)
         redirectLocation(result) mustBe None
       }
 
       "when user does not have enough confidence level" in runningApplication { _ =>
         when(mockAppConfig.confidenceLevel).thenReturn(L250)
-        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L200, ptaEnrolment))
+        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L200))
         val result = handler.run(fakeRequestWithCorrelationId)
         contentAsJson(result) mustBe Json.toJson(UnauthorisedError)
       }
 
       "when user does not have pta enrolment" in runningApplication { _ =>
-        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250, invalidEnrolment))
+        setAuthValue(Future.failed(new InsufficientEnrolments("No PTA enrolment") {}))
         val result = handler.run(fakeRequestWithCorrelationId)
         redirectLocation(result) mustBe None
       }
@@ -147,7 +140,7 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
     "return an IdentifierRequest" - {
       "User has a pta enrolment" in runningApplication { _ =>
         when(mockAppConfig.confidenceLevel).thenReturn(L250)
-        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250, ptaEnrolment))
+        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250))
 
         val result = handler.run(fakeRequestWithCorrelationId)
 
@@ -159,7 +152,7 @@ class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFact
 
       "must throw an error when correlationId is missing from request headers" in runningApplication { _ =>
         when(mockAppConfig.confidenceLevel).thenReturn(L250)
-        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250, ptaEnrolment))
+        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250))
 
         val result = handler.run(FakeRequest())
 
