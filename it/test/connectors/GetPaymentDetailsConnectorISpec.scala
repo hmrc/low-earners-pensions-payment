@@ -137,13 +137,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           .code mustBe "INTERNAL_SERVER_ERROR"
       }
 
-      val responseJsonString: String =
-        """
-          |{
-          | "currentLowEarnersOptimisticLock": 1,
-          | "identifier": "One"
-          |}
-        """.stripMargin
+      val responseJsonString: String = retrieveResponseJson.toString
 
       "[retrieveDetails] should return the expected result when NPS returns a valid OK response" in new Test {
         stubGet(
@@ -157,8 +151,8 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
 
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, RetrieveClaimsResponse(0, "Zero")))
-          .responseData mustBe RetrieveClaimsResponse(1, "One")
+        result.getOrElse(ResponseWrapper(correlationId, dummyRetrieveResponse))
+          .responseData mustBe retrieveResponse
       }
 
       "[retrieveDetails] should handle appropriately when correlation ID is missing for a success" in new Test {
@@ -173,8 +167,8 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
 
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, RetrieveClaimsResponse(0, "Zero")))
-          .responseData mustBe RetrieveClaimsResponse(1, "One")
+        result.getOrElse(ResponseWrapper(correlationId, dummyRetrieveResponse))
+          .responseData mustBe retrieveResponse
       }
 
       "[retrieveDetails] should handle appropriately when correlation ID is non-matching for a success" in new Test {
@@ -189,8 +183,8 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
 
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, RetrieveClaimsResponse(0, "Zero")))
-          .responseData mustBe RetrieveClaimsResponse(1, "One")
+        result.getOrElse(ResponseWrapper(correlationId, dummyRetrieveResponse))
+          .responseData mustBe retrieveResponse
       }
     }
   }

@@ -50,17 +50,8 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
     )
 
     val nino: String = "AA123456C"
-
-    val getResponseJson: String =
-      """
-        |{
-        | "currentLowEarnersOptimisticLock": 1,
-        | "identifier" : "One"
-        |}
-        """.stripMargin
-
-    val responseModel: RetrieveClaimsResponse = RetrieveClaimsResponse(1, "One")
-
+    val getResponseJson: String = retrieveResponseJson.toString
+    val responseModel: RetrieveClaimsResponse = retrieveResponse
     val getUrl: String = s"/paye/low-earners/$nino/calculation-results"
 
     val application: Application = new GuiceApplicationBuilder()

@@ -59,7 +59,8 @@ class AuthIdentifierActionSpec extends SpecBase with StubPlayBodyParsersFactory 
   private val mockAuthConnector: AuthConnector = mock[AuthConnector]
   private val mockAppConfig: AppConfig = mock[AppConfig]
   
-  def authAction = new AuthIdentifierAction(authConnector = mockAuthConnector,
+  def authAction = new AuthIdentifierAction(
+    authConnector = mockAuthConnector,
     config = mockAppConfig,
     playBodyParsers = parsers
   )(ExecutionContext.global)
@@ -86,11 +87,13 @@ class AuthIdentifierActionSpec extends SpecBase with StubPlayBodyParsersFactory 
                  confidenceLevel: ConfidenceLevel): Option[String] ~ Option[String] ~ ConfidenceLevel =
     internalId and nino and confidenceLevel
 
-  val ptaEnrolment: Enrolment =
-    Enrolment(Constants.ptaEnrolmentKey, Seq(EnrolmentIdentifier("Some_Id", "A2100001")), "Activated")
+  val ptaEnrolment: Enrolment = Enrolment(
+    key = Constants.ptaEnrolmentKey,
+    identifiers = Seq(EnrolmentIdentifier("Some_Id", "A2100001")),
+    state = "Activated"
+  )
 
-  val invalidEnrolment: Enrolment =
-    Enrolment("INVALID", Seq.empty, "Activated")
+  val invalidEnrolment: Enrolment = Enrolment("INVALID", Seq.empty, "Activated")
 
   def setAuthValue(value: Option[String] ~ Option[String] ~ ConfidenceLevel): Unit =
     setAuthValue(Future.successful(value))

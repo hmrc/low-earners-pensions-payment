@@ -21,12 +21,14 @@ import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import controllers.actions.FakeIdentifierAction
+import models.nps.retrieve.{LowEarnersCalculation, LowEarnersClaimDetails, LowEarnersDataDetails, LowEarnersDetails, RetrieveClaimsResponse}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.{Millis, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.BodyParsers
 import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
 
@@ -80,4 +82,86 @@ abstract class ItBaseSpec
         .withRequestBody(equalTo(requestBody))
         .willReturn(response)
     )
+
+  private val dataDetails: LowEarnersDataDetails = LowEarnersDataDetails(
+    responseTimestamp = Some("2023-06-27 09:12:28"),
+    calculationSequenceNumber = 123,
+    dataSourceMaster = "CESA",
+    netPayContributionsTotal = Some(10.56),
+    basicRatePercentage = Some(10.56),
+    totalAllowances = Some(10.56),
+    totalIncome = Some(10.56),
+    totalDeductions = Some(10.56),
+    totalTaxDue = Some(10.56)
+  )
+
+  private val claimDetails: LowEarnersClaimDetails = LowEarnersClaimDetails(
+    claimSequenceNumber = 123,
+    entitlementAmount = Some(10.56),
+    claimStatus = "CANCELLED",
+    inSelfAssessment = true,
+    calculationDate = Some("2023-06-27"),
+    claimDate = Some("2023-06-27"),
+    reminderOutputSent = true,
+    reissueClaimOutput = true,
+    originalAmount = Some(10.56)
+  )
+
+  private val calculation: LowEarnersCalculation = LowEarnersCalculation(
+    lowEarnersClaimDetails = claimDetails,
+    lowEarnersDataDetails = dataDetails
+  )
+
+  private val details: LowEarnersDetails = LowEarnersDetails(
+    taxYear = 11,
+    lowEarnersCalculations = Seq(calculation)
+  )
+
+  val retrieveResponse: RetrieveClaimsResponse = RetrieveClaimsResponse(
+    currentLowEarnersOptimisticLock = 123,
+    identifier = "id",
+    lowEarnersDetailsList = Seq(details)
+  )
+  
+  val dummyRetrieveResponse: RetrieveClaimsResponse = RetrieveClaimsResponse(0, "Zero", Nil)
+  
+  val retrieveResponseJson: JsValue = Json.parse(
+    """
+      |{
+      | "currentLowEarnersOptimisticLock": 123,
+      | "identifier": "id",
+      | "lowEarnersDetailsList": [
+      |   {
+      |     "taxYear": 11,
+      |     "lowEarnersCalculations": [
+      |       {
+      |         "lowEarnersClaimDetails": {
+      |           "claimSequenceNumber": 123,
+      |           "calculationDate": "2023-06-27",
+      |           "claimDate": "2023-06-27",
+      |           "claimStatus": "CANCELLED",
+      |           "entitlementAmount": 10.56,
+      |           "inSelfAssessment": true,
+      |           "originalAmount": 10.56,
+      |           "reissueClaimOutput": true,
+      |           "reminderOutputSent": true
+      |         },
+      |         "lowEarnersDataDetails": {
+      |           "calculationSequenceNumber": 123,
+      |           "basicRatePercentage": 10.56,
+      |           "dataSourceMaster": "CESA",
+      |           "netPayContributionsTotal": 10.56,
+      |           "responseTimestamp": "2023-06-27 09:12:28",
+      |           "totalAllowances": 10.56,
+      |           "totalDeductions": 10.56,
+      |           "totalIncome": 10.56,
+      |           "totalTaxDue": 10.56
+      |         }
+      |       }
+      |     ]
+      |   }
+      | ]
+      |}
+    """.stripMargin
+  )
 }
