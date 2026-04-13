@@ -16,15 +16,15 @@
 
 package controllers
 
-import base.UnitBaseSpec
+import base.SpecBase
 import cats.data.EitherT
 import connectors.GetPaymentDetailsConnector
 import controllers.actions.FakeIdentifierAction
 import models.errors.{ErrorWrapper, LeppError}
-import models.response.{LeppPaymentDetails, ResponseWrapper}
+import models.nps.retrieve.RetrieveClaimsResponse
+import models.response.ResponseWrapper
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.matchers.should.Matchers.shouldBe
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import utils.ErrorCodes.*
@@ -32,7 +32,7 @@ import utils.ErrorCodes.*
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class GetPaymentDetailsControllerSpec extends UnitBaseSpec {
+class GetPaymentDetailsControllerSpec extends SpecBase {
 
   private lazy val mockGetPaymentDetailsConnector: GetPaymentDetailsConnector = mock[GetPaymentDetailsConnector]
 
@@ -42,7 +42,7 @@ class GetPaymentDetailsControllerSpec extends UnitBaseSpec {
     mockGetPaymentDetailsConnector
   )
 
-  val responseModel: LeppPaymentDetails = LeppPaymentDetails(1, "One")
+  val responseModel: RetrieveClaimsResponse = retrieveResponse
 
   val correlationId = "X-123"
 
@@ -58,7 +58,7 @@ class GetPaymentDetailsControllerSpec extends UnitBaseSpec {
       )
 
       val response = controller.getPaymentDetails(request)
-      status(response) shouldBe OK
+      status(response) mustBe OK
     }
 
     "return error" - {
@@ -74,7 +74,7 @@ class GetPaymentDetailsControllerSpec extends UnitBaseSpec {
           )
 
           val response = controller.getPaymentDetails(request)
-          status(response) shouldBe expectedStatus
+          status(response) mustBe expectedStatus
         }
 
       val input = Seq(

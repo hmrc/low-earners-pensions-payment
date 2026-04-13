@@ -16,10 +16,10 @@
 
 package models.response
 
-import base.UnitBaseSpec
+import base.SpecBase
 import models.response.ResponseWrapper
 
-class ResponseWrapperSpec extends UnitBaseSpec {
+class ResponseWrapperSpec extends SpecBase {
   "map" - {
     "on responseData" in {
       val responseWrapper = ResponseWrapper[String]("my id", "beans")

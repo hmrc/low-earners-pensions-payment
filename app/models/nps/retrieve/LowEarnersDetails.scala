@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,12 @@
  * limitations under the License.
  */
 
-package config
+package models.nps.retrieve
 
-import base.SpecBase
+import play.api.libs.json.{Json, OFormat}
 
-class AppConfigSpec extends SpecBase {
+case class LowEarnersDetails(taxYear: Int, lowEarnersCalculations: Seq[LowEarnersCalculation])
 
-  val appConfig: AppConfig = injected[AppConfig]
-
-  "FrontEndAppConfig" - {
-    "have appName" in {
-      appConfig.appName must be("low-earners-pensions-payment")
-    }
-    "have host" in {
-      appConfig.host must be("http://localhost:7504")
-    }
-
-    "have confidenceLevel" in {
-      appConfig.confidenceLevel.level must be(250)
-    }
-  }
+object LowEarnersDetails {
+  implicit val format: OFormat[LowEarnersDetails] = Json.format[LowEarnersDetails]
 }

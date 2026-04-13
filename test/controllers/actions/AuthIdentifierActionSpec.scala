@@ -32,7 +32,7 @@
 
 package controllers.actions
 
-import base.UnitBaseSpec
+import base.SpecBase
 import com.google.inject.Inject
 import config.AppConfig
 import models.errors.{InvalidBearerTokenError, UnauthorisedError}
@@ -54,7 +54,7 @@ import utils.Constants
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthIdentifierActionSpec extends UnitBaseSpec with StubPlayBodyParsersFactory {
+class AuthIdentifierActionSpec extends SpecBase with StubPlayBodyParsersFactory {
 
   private val mockAuthConnector: AuthConnector = mock[AuthConnector]
   private val mockAppConfig: AppConfig = mock[AppConfig]

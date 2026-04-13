@@ -20,7 +20,8 @@ import cats.data.EitherT
 import config.AppConfig
 import controllers.requests.CorrelationId
 import models.errors.ErrorWrapper
-import models.response.{LeppPaymentDetails, ResponseWrapper}
+import models.nps.retrieve.RetrieveClaimsResponse
+import models.response.ResponseWrapper
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.http.Status.*
 import uk.gov.hmrc.http.HeaderCarrier
@@ -35,14 +36,14 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: HttpClientV2)
-    extends BaseNpsConnector[LeppPaymentDetails]
+    extends BaseNpsConnector[RetrieveClaimsResponse]
     with Logging {
 
   def retrieveDetails(nino: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     correlationId: CorrelationId
-  ): ConnectorResult[LeppPaymentDetails] = {
+  ): ConnectorResult[RetrieveClaimsResponse] = {
     val retrieveUrl = s"${config.getPaymentDetailsUrl}/$nino/calculation-results"
 
     val methodLoggingContext: String = "retrieveDetails"
@@ -56,7 +57,7 @@ class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: Http
           (AUTHORIZATION, authorization()),
           (ENVIRONMENT, config.npsEnv)
         )
-        .execute[Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]]]
+        .execute[Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]]]
     ).bimap(
       err => {
         val resultCorrelationId: CorrelationId = checkIdsMatch(

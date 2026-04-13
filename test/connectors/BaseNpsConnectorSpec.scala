@@ -16,7 +16,7 @@
 
 package connectors
 
-import base.UnitBaseSpec
+import base.SpecBase
 import config.AppConfig
 import models.errors.*
 import models.response.ResponseWrapper
@@ -25,7 +25,7 @@ import play.api.libs.json.{Json, Reads}
 import uk.gov.hmrc.http.*
 import utils.Logging
 
-class BaseNpsConnectorSpec extends UnitBaseSpec {
+class BaseNpsConnectorSpec extends SpecBase {
 
   protected case class DummyClass(field: String)
 

@@ -21,7 +21,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import config.AppConfig
 import controllers.actions.IdentifierAction
-import models.response.LeppPaymentDetails
+import models.nps.retrieve.RetrieveClaimsResponse
 import org.mockito.Mockito.reset
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.Application
@@ -59,7 +59,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
         |}
         """.stripMargin
 
-    val responseModel: LeppPaymentDetails = LeppPaymentDetails(1, "One")
+    val responseModel: RetrieveClaimsResponse = RetrieveClaimsResponse(1, "One")
 
     val getUrl: String = s"/paye/low-earners/$nino/calculation-results"
 

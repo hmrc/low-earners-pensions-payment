@@ -21,7 +21,8 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import controllers.requests.CorrelationId
 import models.errors.{ErrorWrapper, LeppError}
-import models.response.{LeppPaymentDetails, ResponseWrapper}
+import models.nps.retrieve.RetrieveClaimsResponse
+import models.response.ResponseWrapper
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.scalactic.Prettifier.default
@@ -64,7 +65,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           response = aResponse().withStatus(IM_A_TEAPOT).withHeader(correlationId.value, "X-123")
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
@@ -82,7 +83,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           response = aResponse().withStatus(NOT_FOUND).withHeader(correlationId.value, "X-123")
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
@@ -100,7 +101,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           response = okJson("").withHeader(correlationId.value, "X-123")
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
@@ -124,7 +125,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           )
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
@@ -150,14 +151,14 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           response = okJson(responseJsonString).withHeader(correlationId.value, "X-123")
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
 
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, LeppPaymentDetails(0, "Zero")))
-          .responseData mustBe LeppPaymentDetails(1, "One")
+        result.getOrElse(ResponseWrapper(correlationId, RetrieveClaimsResponse(0, "Zero")))
+          .responseData mustBe RetrieveClaimsResponse(1, "One")
       }
 
       "[retrieveDetails] should handle appropriately when correlation ID is missing for a success" in new Test {
@@ -166,14 +167,14 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           response = okJson(responseJsonString)
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
 
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, LeppPaymentDetails(0, "Zero")))
-          .responseData mustBe LeppPaymentDetails(1, "One")
+        result.getOrElse(ResponseWrapper(correlationId, RetrieveClaimsResponse(0, "Zero")))
+          .responseData mustBe RetrieveClaimsResponse(1, "One")
       }
 
       "[retrieveDetails] should handle appropriately when correlation ID is non-matching for a success" in new Test {
@@ -182,14 +183,14 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
           response = okJson(responseJsonString).withHeader("correlationId", "NotMatching")
         )
 
-        val result: Either[ErrorWrapper, ResponseWrapper[LeppPaymentDetails]] =
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
           await(connector.retrieveDetails(nino).value)
 
         WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
 
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, LeppPaymentDetails(0, "Zero")))
-          .responseData mustBe LeppPaymentDetails(1, "One")
+        result.getOrElse(ResponseWrapper(correlationId, RetrieveClaimsResponse(0, "Zero")))
+          .responseData mustBe RetrieveClaimsResponse(1, "One")
       }
     }
   }

@@ -16,10 +16,10 @@
 
 package models.errors
 
-import base.UnitBaseSpec
+import base.SpecBase
 import play.api.libs.json.Json
 
-class LeppErrorSpec extends UnitBaseSpec {
+class LeppErrorSpec extends SpecBase {
   "LeppError" -> {
     "writes should return the expected JSON" in {
       LeppError.writes.writes(LeppError("CODE", "Message")) mustBe Json.parse(

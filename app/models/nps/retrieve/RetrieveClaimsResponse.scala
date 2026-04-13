@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package models.response
+package models.nps.retrieve
 
 import play.api.libs.json.{Json, OFormat}
 
-case class LeppPaymentDetails(currentLowEarnersOptimisticLock: Int,
-                              identifier: String)
+case class RetrieveClaimsResponse(currentLowEarnersOptimisticLock: BigInt,
+                                  identifier: String,
+                                  lowEarnersDetailsList: Seq[LowEarnersDetails])
 
-object LeppPaymentDetails {
-  implicit val format: OFormat[LeppPaymentDetails] = Json.format[LeppPaymentDetails]
+object RetrieveClaimsResponse {
+  implicit val format: OFormat[RetrieveClaimsResponse] = Json.format[RetrieveClaimsResponse]
 }
