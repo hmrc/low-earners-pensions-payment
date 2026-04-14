@@ -1,8 +1,11 @@
 import uk.gov.hmrc.DefaultBuildSettings
 
-ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "3.3.6"
-ThisBuild / scalacOptions += "-Wconf:msg=Flag.*repeatedly:s"
+inThisBuild(
+  List(
+    scalaVersion := "3.3.7",
+    majorVersion := 0
+  )
+)
 
 lazy val microservice = Project("low-earners-pensions-payment", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
@@ -12,14 +15,19 @@ lazy val microservice = Project("low-earners-pensions-payment", file("."))
     scalafmtOnCompile := true,
     PlayKeys.playDefaultPort := 7504
   )
-  .settings(scalacOptions ++= Seq(
-    "-feature",
-    "-deprecation",
-    "-Wconf:msg=unused import&src=conf/.*:s",
-    "-Wconf:msg=Flag.*repeatedly:s",
-    "-Wconf:src=routes/.*:s")
-  )
-  .settings(CodeCoverageSettings.settings *)
+  .settings(scalacOptions ++= commonScalacOptions)
+  .settings(CodeCoverageSettings())
+
+lazy val commonScalacOptions = Seq(
+  "-unchecked",
+  "-deprecation",
+  "-feature",
+  "-Werror",
+  "-Wconf:msg=unused&src=routes/.*:s",
+  "-language:noAutoTupling",
+  "-Xfatal-warnings",
+  "-Wconf:msg=Flag.*repeatedly:s"
+)
 
 lazy val it = project
   .in(file("it"))
@@ -33,4 +41,4 @@ lazy val it = project
     Test / unmanagedResourceDirectories += baseDirectory.value / "it" / "test" / "resources"
   )
 
-addCommandAlias("testc", "; clean ; coverage ; test ; it/test ; coverageReport ;")
+addCommandAlias("runAllTests", "; clean ; coverage ; test ; it/test ; coverageReport ;")
