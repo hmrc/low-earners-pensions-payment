@@ -80,7 +80,6 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
       val input = Seq(
         (BAD_REQUEST_ERROR, BAD_REQUEST),
         (NOT_FOUND_ERROR, NOT_FOUND),
-        (FORBIDDEN_ERROR, FORBIDDEN),
         (INTERNAL_ERROR, INTERNAL_SERVER_ERROR),
         (SERVICE_UNAVAILABLE_ERROR, INTERNAL_SERVER_ERROR)
       )

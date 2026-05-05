@@ -54,17 +54,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
     val responseModel: RetrieveClaimsResponse = retrieveResponse
     val getUrl: String = s"/paye/low-earners/$nino/calculation-results"
 
-    val application: Application = new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.nps.port" -> wireMockPort,
-        "urls.npsContext" -> ""
-      )
-      .overrides(
-        bind[IdentifierAction].toInstance(fakeIdentifierAction)
-      )
-      .build()
-
-    val controller: GetPaymentDetailsController = application.injector.instanceOf[GetPaymentDetailsController]
+    val controller: GetPaymentDetailsController = app.injector.instanceOf[GetPaymentDetailsController]
 
     def setupStubs(
                     getStatus: Int,

@@ -20,18 +20,29 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import controllers.actions.FakeIdentifierAction
+import com.google.inject.{AbstractModule, Provides}
+import controllers.actions.{FakeIdentifierAction, IdentifierAction}
 import models.nps.retrieve.{LowEarnersCalculation, LowEarnersClaimDetails, LowEarnersDataDetails, LowEarnersDetails, RetrieveClaimsResponse}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.{Millis, Span}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.{Application, inject}
+import play.api.http.HeaderNames
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.BodyParsers
+import play.api.test.FakeRequest
+import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
+import utils.FrozenTime
+import utils.HeaderKey.correlationIdKey
 
+import java.time.Clock
+import java.util.UUID
+import scala.annotation.unused
 import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.reflect.ClassTag
 
@@ -41,6 +52,8 @@ abstract class ItBaseSpec
     with HttpClientV2Support
     with ScalaFutures
     with Matchers
+    with BeforeAndAfterAll
+    with BeforeAndAfterEach
     with GuiceOneServerPerSuite {
 
   val parsers: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
@@ -55,13 +68,40 @@ abstract class ItBaseSpec
       k -> equalTo(v)
   }.asJava
 
-  protected def applicationBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .configure(
-        "auditing.enabled" -> false,
-        "metric.enabled" -> false
-      )
+  def rndSessionId: String = s"session-${UUID.randomUUID.toString}"
+  
+  implicit class AuthRequest[+A](request: FakeRequest[A]) {
+    def withAuthToken(authToken: String = "authToken"): FakeRequest[A] =
+      request.withHeaders(HeaderNames.AUTHORIZATION -> authToken, correlationIdKey -> "X-Id")
 
+    def withJsonContentType(): FakeRequest[A] =
+      request.withHeaders(HeaderNames.CONTENT_TYPE -> "text/json")
+
+    def withSessionId(sessionId: String = rndSessionId): FakeRequest[A] =
+      request.withSession(SessionKeys.sessionId -> sessionId)
+  }
+
+  lazy val overridingsModule: AbstractModule = new AbstractModule {
+    @Provides
+    @unused
+    def clock: Clock = {
+      FrozenTime.reset()
+      FrozenTime.getClock
+    }
+  }
+
+  val overridingGuiceableModule: Seq[GuiceableModule] = Seq(GuiceableModule.fromGuiceModules(List(overridingsModule)))
+
+  val application: Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.nps.port" -> wireMockPort,
+      "urls.npsContext" -> ""
+    )
+    .overrides(
+      inject.bind[IdentifierAction].toInstance(fakeIdentifierAction)
+    ).overrides(overridingGuiceableModule: _*)
+    .build()
+  
   def stubGet(url: String, response: ResponseDefinitionBuilder): StubMapping =
     wireMockServer.stubFor(
       get(urlEqualTo(url))

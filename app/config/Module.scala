@@ -18,6 +18,8 @@ package config
 
 import play.api.inject.{Binding, Module as AppModule}
 import play.api.{Configuration, Environment}
+import repositories.{MongoCrypto, MongoCryptoImpl}
+import uk.gov.hmrc.mongo.lock.{LockRepository, MongoLockRepository}
 
 import java.time.Clock
 
@@ -27,5 +29,7 @@ class Module extends AppModule:
     environment  : Environment,
     configuration: Configuration
   ): Seq[Binding[_]] =
+    bind[MongoCrypto].to(classOf[MongoCryptoImpl]) :: 
+    bind[LockRepository].to(classOf[MongoLockRepository]) ::
     bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
     Nil

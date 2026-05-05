@@ -76,7 +76,7 @@ class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: Http
 
   override protected[connectors] val errorMap: Map[Int, String] = Map(
     BAD_REQUEST -> BAD_REQUEST_ERROR,
-    FORBIDDEN -> FORBIDDEN_ERROR,
+    FORBIDDEN -> NOT_FOUND_ERROR,
     NOT_FOUND -> NOT_FOUND_ERROR,
     UNPROCESSABLE_ENTITY -> NOT_FOUND_ERROR,
     INTERNAL_SERVER_ERROR -> INTERNAL_ERROR,
