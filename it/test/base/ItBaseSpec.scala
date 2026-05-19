@@ -71,7 +71,7 @@ abstract class ItBaseSpec
   def rndSessionId: String = s"session-${UUID.randomUUID.toString}"
   
   implicit class AuthRequest[+A](request: FakeRequest[A]) {
-    def withAuthToken(authToken: String = "authToken"): FakeRequest[A] =
+    def withAuthToken(authToken: String = "Bearer authToken"): FakeRequest[A] =
       request.withHeaders(HeaderNames.AUTHORIZATION -> authToken, correlationIdKey -> "X-Id")
 
     def withJsonContentType(): FakeRequest[A] =

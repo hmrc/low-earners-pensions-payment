@@ -68,10 +68,11 @@ class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
     val logContext: String = "[AuthenticatedIdentifierAction][invokeBlock] - "
-
+    
     handleWithCorrelationId(request, logContext) { req =>
+
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(req)
-      println(" -------------------------- NO YES " + hc.authorization.get.value)
+      
       authorised(Enrolment(Constants.ptaEnrolmentKey))
         .retrieve(Retrievals.internalId and Retrievals.nino and Retrievals.confidenceLevel) {
           case Some(internalId) ~ Some(nino) ~ confidenceLevel if confidenceLevel >= config.confidenceLevel =>

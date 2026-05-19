@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import controllers.requests.CorrelationId
 import models.requests.{AuthUser, IdentifierRequest}
 import play.api.mvc.*
 
@@ -25,7 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class FakeIdentifierAction @Inject()(bodyParsers: BodyParsers.Default) extends IdentifierAction {
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] =
-    block(IdentifierRequest(request, AuthUser.apply("1", "AA123456C"), "x-id"))
+    block(IdentifierRequest(request, AuthUser.apply("1", "AA123456C"), CorrelationId("X-id")))
 
   override def parser: BodyParser[AnyContent] = bodyParsers
 
