@@ -30,8 +30,7 @@ final case class BarsVerifyStatus(
 )
 
 object BarsVerifyStatus {
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any"))
+  
   implicit val format: OFormat[BarsVerifyStatus] = Json.format
 
   def apply(id: BarsVerifyStatusId): BarsVerifyStatus = BarsVerifyStatus(
@@ -49,10 +48,8 @@ final case class EncryptedBarsVerifyStatus(
 )
 
 object EncryptedBarsVerifyStatus {
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any"))
+  
   implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
-
-  @SuppressWarnings(Array("org.wartremover.warts.Any"))
+  
   implicit val format: OFormat[EncryptedBarsVerifyStatus] = Json.format
 }

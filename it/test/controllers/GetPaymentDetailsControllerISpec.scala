@@ -32,7 +32,6 @@ import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.ErrorCodes.*
-import utils.HeaderKey
 
 import scala.concurrent.Future
 
