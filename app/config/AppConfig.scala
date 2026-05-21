@@ -22,6 +22,8 @@ import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L250
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.concurrent.duration.FiniteDuration
+
 @Singleton
 class AppConfig @Inject()(configuration: Configuration):
 
@@ -47,3 +49,10 @@ class AppConfig @Inject()(configuration: Configuration):
   lazy val npsEnv: String = loadConfig("nps-headers.env")
 
   lazy val govUkOriginatorId: String = loadConfig("nps-headers.govUkOriginatorId")
+
+
+  val encryptionKey: String = servicesConfig.getString("mongodb.encryption-key")
+
+  val barsVerifyRepoTtl: FiniteDuration     = configuration.get[FiniteDuration]("bars.verify.repoTtl")
+  val barsVerifyMaxAttempts: Int            = configuration.get[Int]("bars.verify.maxAttempts")
+  val barsVerifyRepoReplaceIndexes: Boolean = configuration.get[Boolean]("bars.verify.replaceIndexes")

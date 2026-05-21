@@ -20,15 +20,11 @@ import base.ItBaseSpec
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import config.AppConfig
-import controllers.actions.IdentifierAction
 import models.nps.retrieve.RetrieveClaimsResponse
 import org.mockito.Mockito.reset
 import org.scalatestplus.mockito.MockitoSugar.mock
-import play.api.Application
 import play.api.Play.materializer
 import play.api.http.Status.*
-import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
@@ -53,16 +49,6 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
     val getResponseJson: String = retrieveResponseJson.toString
     val responseModel: RetrieveClaimsResponse = retrieveResponse
     val getUrl: String = s"/paye/low-earners/$nino/calculation-results"
-
-    val application: Application = new GuiceApplicationBuilder()
-      .configure(
-        "microservice.services.nps.port" -> wireMockPort,
-        "urls.npsContext" -> ""
-      )
-      .overrides(
-        bind[IdentifierAction].toInstance(fakeIdentifierAction)
-      )
-      .build()
 
     val controller: GetPaymentDetailsController = application.injector.instanceOf[GetPaymentDetailsController]
 
@@ -89,7 +75,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
 
   "GetPaymentDetailsController" when {
     "getPaymentDetails" should {
-      "[getPaymentDetails] return 200 for a valid nino" in new Test {
+      "return 200 for a valid nino" in new Test {
         setupStubs(
           getStatus = OK,
           getResponse = getResponseJson
@@ -102,7 +88,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
       }
 
       def handleRetrieveErrors(errorStatus: Int, errorCode: String, expectedStatus: Int): Unit =
-        s"[getPaymentDetails] handle appropriately when get API returns error status: $errorStatus" in new Test {
+        s"handle appropriately when get API returns error status: $errorStatus" in new Test {
           setupStubs(
             getStatus = errorStatus,
             getResponse = "N/A"
@@ -117,7 +103,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
 
       val getErrorCases: Seq[(Int, String, Int)] = Seq(
         (BAD_REQUEST, BAD_REQUEST_ERROR, BAD_REQUEST),
-        (FORBIDDEN, FORBIDDEN_ERROR, FORBIDDEN),
+        (FORBIDDEN, NOT_FOUND_ERROR, NOT_FOUND),
         (NOT_FOUND, NOT_FOUND_ERROR, NOT_FOUND),
         (UNPROCESSABLE_ENTITY, NOT_FOUND_ERROR, NOT_FOUND),
         (INTERNAL_SERVER_ERROR, INTERNAL_ERROR, INTERNAL_SERVER_ERROR),

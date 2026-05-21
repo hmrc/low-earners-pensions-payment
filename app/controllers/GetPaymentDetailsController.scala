@@ -57,7 +57,6 @@ class GetPaymentDetailsController @Inject()(
       val errorResponse = errorWrapper.error.code match {
         case BAD_REQUEST_ERROR => BadRequest(Json.toJson(errorWrapper.error))
         case NOT_FOUND_ERROR => NotFound(Json.toJson(errorWrapper.error))
-        case FORBIDDEN_ERROR => Forbidden(Json.toJson(errorWrapper.error))
         case _ => InternalServerError(Json.toJson(errorWrapper.error))
       }
 

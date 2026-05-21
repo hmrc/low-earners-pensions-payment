@@ -1,3 +1,9 @@
 # microservice specific routes
 
 GET        /get-payment-details     controllers.GetPaymentDetailsController.getPaymentDetails
+
+#######################################
+# BARs verify status (for lockout)
+#######################################
+POST        /bars/verify/status                                  controllers.BarsVerifyStatusController.status()
+POST        /bars/verify/update                                  controllers.BarsVerifyStatusController.update()
