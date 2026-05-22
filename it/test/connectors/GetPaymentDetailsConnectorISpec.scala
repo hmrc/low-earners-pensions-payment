@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import common.ItBaseSpec
 import models.{CorrelationId, ResponseWrapper}
-import models.errors.{ErrorWrapper, LeppError}
+import models.errors.{ErrorWrapper, LeppError, NoDataError}
 import models.nps.retrieve.RetrieveClaimsResponse
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
@@ -28,6 +28,7 @@ import org.scalactic.Prettifier.default
 import play.api.Application
 import play.api.http.Status.*
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsValue
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -50,6 +51,8 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
     implicit lazy val actorSystem: ActorSystem = app.actorSystem
     implicit lazy val materializer: Materializer = app.materializer
 
+    val dummyErrorWrapper: ErrorWrapper = ErrorWrapper(correlationId, LeppError("N/A", "N/A"))
+    
   }
 
   "RetrievePaymentDetailsConnector" -> {
@@ -71,7 +74,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
 
         result mustBe a[Left[_, _]]
         result.swap
-          .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
+          .getOrElse(dummyErrorWrapper)
           .error
           .code mustBe "UNEXPECTED_STATUS_ERROR"
       }
@@ -89,7 +92,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
 
         result mustBe a[Left[_, _]]
         result.swap
-          .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
+          .getOrElse(dummyErrorWrapper)
           .error
           .code mustBe "NOT_FOUND"
       }
@@ -107,7 +110,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
 
         result mustBe a[Left[_, _]]
         result.swap
-          .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
+          .getOrElse(dummyErrorWrapper)
           .error
           .code mustBe "INTERNAL_SERVER_ERROR"
       }
@@ -131,7 +134,7 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
 
         result mustBe a[Left[_, _]]
         result.swap
-          .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
+          .getOrElse(dummyErrorWrapper)
           .error
           .code mustBe "INTERNAL_SERVER_ERROR"
       }
@@ -153,6 +156,31 @@ class GetPaymentDetailsConnectorISpec extends ItBaseSpec {
         result.getOrElse(ResponseWrapper(correlationId, dummyRetrieveResponse))
           .responseData mustBe retrieveResponse
       }
+
+      "[retrieveDetails] should handle correctly when NPS response contains no payment data" in new Test {
+        val noDataResponse: String = 
+          """
+            |{
+            | "currentLowEarnersOptimisticLock": 123,
+            | "identifier": "id",
+            | "lowEarnersDetailsList": []
+            |}
+          """.stripMargin
+        
+        stubGet(
+          url = npsUrl,
+          response = okJson(noDataResponse).withHeader(correlationId.value, "X-123")
+        )
+
+        val result: Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]] =
+          await(connector.retrieveDetails(nino).value)
+
+        WireMock.verify(getRequestedFor(urlEqualTo(npsUrl)))
+
+        result mustBe a[Left[_, _]]
+        result.swap.getOrElse(dummyErrorWrapper).error mustBe NoDataError
+      }
+
 
       "[retrieveDetails] should handle appropriately when correlation ID is missing for a success" in new Test {
         stubGet(
