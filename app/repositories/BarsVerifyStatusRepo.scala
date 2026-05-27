@@ -18,33 +18,44 @@ package repositories
 
 import config.AppConfig
 import models.bars.EncryptedBarsVerifyStatus
-import org.mongodb.scala.model.{IndexModel, IndexOptions, Indexes}
+import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
-import repositories.BarsVerifyStatusRepo.id
-import repositories.BarsVerifyStatusRepo.idExtractor
-import repositories.Repo.{Id, IdExtractor}
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-final class BarsVerifyStatusRepo @Inject() (
+class BarsVerifyStatusRepo @Inject() (
   mongoComponent: MongoComponent,
   config:         AppConfig
 )(implicit ec: ExecutionContext)
-    extends Repo[String, EncryptedBarsVerifyStatus](
+    extends PlayMongoRepository[EncryptedBarsVerifyStatus](
       collectionName = "bars",
       mongoComponent = mongoComponent,
+      domainFormat = EncryptedBarsVerifyStatus.format,
       indexes = BarsVerifyStatusRepo.indexes(config.barsVerifyRepoTtl.toSeconds),
       extraCodecs = Codecs.playFormatCodecsBuilder(EncryptedBarsVerifyStatus.format).build,
       replaceIndexes = config.barsVerifyRepoReplaceIndexes
+    ) {
+  
+  def upsert(a: EncryptedBarsVerifyStatus): Future[Unit] = collection
+    .replaceOne(
+      filter = Filters.eq("_id", a._id),
+      replacement = a,
+      options = ReplaceOptions().upsert(true)
     )
+    .toFuture()
+    .map(_ => ())
 
+  def findById(id: String): Future[Option[EncryptedBarsVerifyStatus]] = collection
+    .find(
+      filter = Filters.eq("_id", id)
+    )
+    .headOption()
+}
 object BarsVerifyStatusRepo {
-  implicit val id: Id[String]                                              = (i: String) => i
-  implicit val idExtractor: IdExtractor[EncryptedBarsVerifyStatus, String] = (b: EncryptedBarsVerifyStatus) => b._id
 
   def indexes(cacheTtlInSeconds: Long): Seq[IndexModel] = Seq(
     IndexModel(

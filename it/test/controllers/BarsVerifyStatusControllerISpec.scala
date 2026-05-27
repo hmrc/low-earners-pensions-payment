@@ -24,6 +24,7 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status.*
+import play.api.libs.json.{JsObject, JsValue}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsString, defaultAwaitTimeout, status}
@@ -55,6 +56,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
       BarsUpdateVerifyStatusParams(BarsVerifyStatusId.from(nino))
 
     def request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withAuthToken()
+    def postRequest: FakeRequest[JsValue] = FakeRequest().withAuthToken().withBody(JsObject.empty)
 
     def initialStatusAttempts(nino: Nino, attempts: Int): Unit =
       repo.collection
@@ -91,7 +93,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
   "the bars verify update controller" when {
     "called for an Id with no record" should {
       "respond with body 'one attempt'" in new Setup {
-        val response: Future[Result] = controller.update()(request)
+        val response: Future[Result] = controller.update()(postRequest)
         status(response) shouldBe OK
         contentAsString(response) shouldBe """{"attempts":1}"""
       }
@@ -100,7 +102,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
     "called for an Id with an existing record of 'one attempt'" should {
       "respond with body 'two attempts'" in new Setup {
         initialStatusAttempts(ninoABC, attempts = 1)
-        val response: Future[Result] = controller.update()(request)
+        val response: Future[Result] = controller.update()(postRequest)
         status(response) shouldBe OK
         contentAsString(response) shouldBe """{"attempts":2}"""
       }
@@ -109,7 +111,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
     "called for an Id with an existing record of 'two attempts'" should {
       "respond with locked-out body" in new Setup {
         initialStatusAttempts(ninoABC, attempts = 2)
-        val response: Future[Result] = controller.update()(request)
+        val response: Future[Result] = controller.update()(postRequest)
         status(response) shouldBe OK
 
         val expectedLockout: Instant = FrozenTime.instant.plus(24, HOURS)
