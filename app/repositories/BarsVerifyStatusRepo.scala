@@ -55,9 +55,10 @@ class BarsVerifyStatusRepo @Inject() (
     )
     .headOption()
 }
+
 object BarsVerifyStatusRepo {
 
-  def indexes(cacheTtlInSeconds: Long): Seq[IndexModel] = Seq(
+  private def indexes(cacheTtlInSeconds: Long): Seq[IndexModel] = Seq(
     IndexModel(
       keys = Indexes.ascending("lastUpdated"),
       indexOptions = IndexOptions().expireAfter(cacheTtlInSeconds, TimeUnit.SECONDS).name("lastUpdatedIdx")
