@@ -52,7 +52,7 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
   val responseModel: RetrieveClaimsResponse = retrieveResponse
 
   val correlationId = "X-123"
-  
+
   private trait Test {
     def mockConnectorSuccess(): OngoingStubbing[ConnectorResult[RetrieveClaimsResponse]] = when(
       mockGetPaymentDetailsConnector.retrieveDetails(any())(any(), any(), any())
@@ -76,7 +76,7 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
       method = "GET",
       path = "/low-earners-pensions-payment/get-payment-details"
     )
-    
+
     "return 200" in new Test {
       mockConnectorSuccess()
       val response: Future[Result] = controller.getPaymentDetails(request)
@@ -114,7 +114,7 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
       status(result) mustBe OK
       contentAsString(result) must include("NO_ACTIONS")
     }
-    
+
     "should handle for a 404 response from NPS" in new Test {
       mockConnectorFailure(NOT_FOUND_ERROR)
       val result: Future[Result] = controller.getLeppSummary(request)
@@ -139,7 +139,7 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
       input.foreach(args => (serviceErrors _).tupled(args))
     }
   }
-  
+
   "getLeppData" - {
     implicit val request: IdentifierRequest[AnyContentAsEmpty.type] = IdentifierRequest(
       request = FakeRequest(),
@@ -149,16 +149,16 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
 
     "should handle appropriately for a connector failure" in new Test {
       mockConnectorFailure("an error")
-      
+
       val result: Future[Result] = controller.getLeppData("context")(
         dataMap = _ => ImATeapot("Teapot time!"),
         errorMap = err => BadRequest(err.error.code)
       )(request)
-      
+
       status(result) mustBe BAD_REQUEST
       contentAsString(result) mustBe "an error"
     }
-    
+
     "should handle appropriately for a success response" in new Test {
       mockConnectorSuccess()
 
@@ -171,7 +171,7 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
       contentAsString(result) mustBe "Teapot time!"
     }
   }
-  
+
   "successResponseToResult" - {
     "should return the expected result for a success response" in {
       val result: Future[Result] = Future.successful(
@@ -182,7 +182,7 @@ class GetPaymentDetailsControllerSpec extends SpecBase {
           )
         )
       )
-      
+
       headers(result).get("correlationId") must not be empty
       status(result) mustBe OK
     }

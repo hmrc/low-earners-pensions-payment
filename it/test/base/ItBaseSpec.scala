@@ -32,7 +32,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.{Application, inject}
 import play.api.http.HeaderNames
 import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.SessionKeys
@@ -204,4 +204,9 @@ abstract class ItBaseSpec
       |}
     """.stripMargin
   )
+  
+  val leppSummaryJson: JsObject = JsObject(Seq(
+    "status" -> JsString("NO_ACTIONS"),
+    "data" -> retrieveResponseJson
+  ))
 }

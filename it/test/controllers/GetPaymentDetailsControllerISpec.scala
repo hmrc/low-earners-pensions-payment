@@ -39,12 +39,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
 
   trait Test {
     implicit val hc: HeaderCarrier = HeaderCarrier()
-
-    val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(
-      method = "GET",
-      path = "/low-earners-pensions-payment/get-payment-details"
-    )
-
+    
     val nino: String = "AA123456C"
     val getResponseJson: String = retrieveResponseJson.toString
     val responseModel: RetrieveClaimsResponse = retrieveResponse
@@ -52,10 +47,7 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
 
     val controller: GetPaymentDetailsController = application.injector.instanceOf[GetPaymentDetailsController]
 
-    def setupStubs(
-                    getStatus: Int,
-                    getResponse: String
-                  ): StubMapping = {
+    def setupStubs(getStatus: Int, getResponse: String): StubMapping = {
       def stub: StubMapping = stubGet(
         url = getUrl,
         response = aResponse.withStatus(getStatus).withBody(getResponse)
@@ -74,8 +66,30 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
   }
 
   "GetPaymentDetailsController" when {
+    def handleRetrieveErrors(fakeRequest: FakeRequest[AnyContentAsEmpty.type ],
+                             errorStatus: Int,
+                             errorCode: String,
+                             expectedStatus: Int): Unit =
+      s"handle appropriately when get API returns error status: $errorStatus" in new Test {
+        setupStubs(
+          getStatus = errorStatus,
+          getResponse = "N/A"
+        )
+
+        val result: Future[Result] = controller.getPaymentDetails(fakeRequest)
+
+        status(result) mustBe expectedStatus
+        val content: String = contentAsJson(result).toString
+        content must include(errorCode)
+      }
+      
     "getPaymentDetails" should {
-      "return 200 for a valid nino" in new Test {
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(
+        method = "GET",
+        path = "/low-earners-pensions-payment/get-payment-details"
+      )
+      
+      "return 200 with the expected body for a valid nino" in new Test {
         setupStubs(
           getStatus = OK,
           getResponse = getResponseJson
@@ -87,31 +101,70 @@ class GetPaymentDetailsControllerISpec extends ItBaseSpec {
         contentAsJson(result) mustBe Json.toJson(responseModel)
       }
 
-      def handleRetrieveErrors(errorStatus: Int, errorCode: String, expectedStatus: Int): Unit =
-        s"handle appropriately when get API returns error status: $errorStatus" in new Test {
-          setupStubs(
-            getStatus = errorStatus,
-            getResponse = "N/A"
-          )
-
-          val result: Future[Result] = controller.getPaymentDetails(fakeRequest)
-
-          status(result) mustBe expectedStatus
-          val content: String = contentAsJson(result).toString
-          content must include(errorCode)
-        }
-
       val getErrorCases: Seq[(Int, String, Int)] = Seq(
         (BAD_REQUEST, BAD_REQUEST_ERROR, BAD_REQUEST),
         (FORBIDDEN, NOT_FOUND_ERROR, NOT_FOUND),
         (NOT_FOUND, NOT_FOUND_ERROR, NOT_FOUND),
-        (UNPROCESSABLE_ENTITY, NOT_FOUND_ERROR, NOT_FOUND),
         (INTERNAL_SERVER_ERROR, INTERNAL_ERROR, INTERNAL_SERVER_ERROR),
         (SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE_ERROR, INTERNAL_SERVER_ERROR),
         (IM_A_TEAPOT, UNEXPECTED_STATUS_ERROR, INTERNAL_SERVER_ERROR)
       )
 
-      getErrorCases.foreach(errorCase => handleRetrieveErrors(errorCase._1, errorCase._2, errorCase._3))
+      getErrorCases.foreach(errorCase => handleRetrieveErrors(fakeRequest, errorCase._1, errorCase._2, errorCase._3))
+    }
+    
+    "getLeppSummary" should {
+      val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(
+        method = "GET",
+        path = "/low-earners-pensions-payment/get-lepp-summary"
+      )
+      
+      "return 200 with the expected body for a valid nino" in new Test {
+        setupStubs(
+          getStatus = OK,
+          getResponse = getResponseJson
+        )
+
+        val result: Future[Result] = controller.getLeppSummary(fakeRequest)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe leppSummaryJson
+      }
+
+      "return 200 with NOT_ELIGIBLE as the status when NPS returns a 403" in new Test {
+        setupStubs(
+          getStatus = FORBIDDEN,
+          getResponse = "N/A"
+        )
+
+        val result: Future[Result] = controller.getLeppSummary(fakeRequest)
+
+        status(result) mustBe OK
+        val content: String = contentAsJson(result).toString
+        content must include("NOT_ELIGIBLE")
+      }
+
+      "return 200 with NOT_ELIGIBLE as the status when NPS returns a 404" in new Test {
+        setupStubs(
+          getStatus = NOT_FOUND,
+          getResponse = "N/A"
+        )
+
+        val result: Future[Result] = controller.getLeppSummary(fakeRequest)
+
+        status(result) mustBe OK
+        val content: String = contentAsJson(result).toString
+        content must include("NOT_ELIGIBLE")
+      }
+
+      val getErrorCases: Seq[(Int, String, Int)] = Seq(
+        (BAD_REQUEST, BAD_REQUEST_ERROR, BAD_REQUEST),
+        (INTERNAL_SERVER_ERROR, INTERNAL_ERROR, INTERNAL_SERVER_ERROR),
+        (SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE_ERROR, INTERNAL_SERVER_ERROR),
+        (IM_A_TEAPOT, UNEXPECTED_STATUS_ERROR, INTERNAL_SERVER_ERROR)
+      )
+
+      getErrorCases.foreach(errorCase => handleRetrieveErrors(fakeRequest, errorCase._1, errorCase._2, errorCase._3))
     }
   }
 }
