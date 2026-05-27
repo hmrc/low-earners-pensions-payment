@@ -17,10 +17,17 @@
 package models.nps.retrieve
 
 import play.api.libs.json.{Json, OFormat}
+import utils.OptionUtils.optFromSeq
 
 case class RetrieveClaimsResponse(currentLowEarnersOptimisticLock: BigInt,
                                   identifier: String,
-                                  lowEarnersDetailsList: Seq[LowEarnersDetails])
+                                  lowEarnersDetailsList: Seq[LowEarnersDetails]) {
+  def filterByStatus(status: String): Option[Seq[LowEarnersCalculation]] = optFromSeq(
+    lowEarnersDetailsList.flatMap(
+      _.lowEarnersCalculations.filter(_.lowEarnersClaimDetails.claimStatus == status)
+    )
+  )
+}
 
 object RetrieveClaimsResponse {
   implicit val format: OFormat[RetrieveClaimsResponse] = Json.format[RetrieveClaimsResponse]
