@@ -39,10 +39,10 @@ class BarsVerifyStatusService @Inject()(
   /*
    * get current count of calls to verify endpoint for this id
    */
-  def status(id: BarsVerifyStatusId): Future[BarsVerifyStatusResponse] =
+  def status(id: BarsVerifyStatusId): Future[BarsVerifyStatusResponse] = 
     find(id).map {
       case Some(barsStatus) => BarsVerifyStatusResponse(barsStatus)
-      case None             =>
+      case None =>
         BarsVerifyStatusResponse(
           attempts = NumberOfBarsVerifyAttempts.zero,
           lockoutExpiryDateTime = None

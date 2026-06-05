@@ -18,8 +18,8 @@ package controllers
 
 import com.google.inject.{Inject, Singleton}
 import controllers.actions.IdentifierAction
-import models.bars.BarsUpdateVerifyStatusParams
-import play.api.libs.json.Json
+import models.bars.BarsVerifyStatusId
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.*
 import services.BarsVerifyStatusService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -34,18 +34,17 @@ class BarsVerifyStatusController @Inject()(
                                           )(implicit exec: ExecutionContext)
                                               extends BackendController(cc) {
 
-  def status(): Action[BarsUpdateVerifyStatusParams] =
-    identify.async(parse.json[BarsUpdateVerifyStatusParams]) { implicit request =>
+  def status(): Action[AnyContent] =
+    identify.async { implicit request =>
       barsService
-        .status(request.body.id)
+        .status(BarsVerifyStatusId(request.user.nino.value))
         .map(resp => Ok(Json.toJson(resp)))
     }
 
-  def update(): Action[BarsUpdateVerifyStatusParams] =
-    identify.async(parse.json[BarsUpdateVerifyStatusParams]) { implicit request =>
+  def update(): Action[JsValue] =
+    identify.async(parse.json) { implicit request =>
       barsService
-        .update(request.body.id)
+        .update(BarsVerifyStatusId(request.user.nino.value))
         .map(resp => Ok(Json.toJson(resp)))
     }
-
 }

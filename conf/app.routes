@@ -5,5 +5,5 @@ GET        /get-payment-details     controllers.GetPaymentDetailsController.getP
 #######################################
 # BARs verify status (for lockout)
 #######################################
-POST        /bars/verify/status                                  controllers.BarsVerifyStatusController.status()
+GET         /bars/verify/status                                  controllers.BarsVerifyStatusController.status()
 POST        /bars/verify/update                                  controllers.BarsVerifyStatusController.update()

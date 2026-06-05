@@ -24,7 +24,8 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.http.Status.*
-import play.api.mvc.Result
+import play.api.libs.json.{JsObject, JsValue}
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsString, defaultAwaitTimeout, status}
 import repositories.{BarsVerifyStatusRepo, MongoCrypto}
@@ -49,13 +50,13 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
     
     val controller: BarsVerifyStatusController = application.injector.instanceOf[BarsVerifyStatusController]
 
-    val ninoABC: Nino = Nino("AB123456C")
+    val ninoABC: Nino = Nino("AA123456C")
 
     def updateVerifyStatusParams(nino: Nino): BarsUpdateVerifyStatusParams =
       BarsUpdateVerifyStatusParams(BarsVerifyStatusId.from(nino))
 
-    def request(nino: Nino): FakeRequest[BarsUpdateVerifyStatusParams] =
-      FakeRequest().withAuthToken().withBody(updateVerifyStatusParams(nino))
+    def request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withAuthToken()
+    def postRequest: FakeRequest[JsValue] = FakeRequest().withAuthToken().withBody(JsObject.empty)
 
     def initialStatusAttempts(nino: Nino, attempts: Int): Unit =
       repo.collection
@@ -73,7 +74,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
   "the bars verify status controller" when {
     "called for an Id with no record" should {
       "respond with body 'zero attempts'" in new Setup {
-        val response: Future[Result] = controller.status()(request(ninoABC))
+        val response: Future[Result] = controller.status()(request)
         status(response) shouldBe OK
         contentAsString(response) shouldBe """{"attempts":0}"""
       }
@@ -82,7 +83,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
     "called for an Id with an existing record of 'one attempt'" should {
       "respond with body 'one attempt'" in new Setup {
         initialStatusAttempts(ninoABC, attempts = 1)
-        val response: Future[Result] = controller.status()(request(ninoABC))
+        val response: Future[Result] = controller.status()(request)
         status(response) shouldBe OK
         contentAsString(response) shouldBe """{"attempts":1}"""
       }
@@ -92,7 +93,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
   "the bars verify update controller" when {
     "called for an Id with no record" should {
       "respond with body 'one attempt'" in new Setup {
-        val response: Future[Result] = controller.update()(request(ninoABC))
+        val response: Future[Result] = controller.update()(postRequest)
         status(response) shouldBe OK
         contentAsString(response) shouldBe """{"attempts":1}"""
       }
@@ -101,7 +102,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
     "called for an Id with an existing record of 'one attempt'" should {
       "respond with body 'two attempts'" in new Setup {
         initialStatusAttempts(ninoABC, attempts = 1)
-        val response: Future[Result] = controller.update()(request(ninoABC))
+        val response: Future[Result] = controller.update()(postRequest)
         status(response) shouldBe OK
         contentAsString(response) shouldBe """{"attempts":2}"""
       }
@@ -110,7 +111,7 @@ class BarsVerifyStatusControllerISpec extends ItBaseSpec {
     "called for an Id with an existing record of 'two attempts'" should {
       "respond with locked-out body" in new Setup {
         initialStatusAttempts(ninoABC, attempts = 2)
-        val response: Future[Result] = controller.update()(request(ninoABC))
+        val response: Future[Result] = controller.update()(postRequest)
         status(response) shouldBe OK
 
         val expectedLockout: Instant = FrozenTime.instant.plus(24, HOURS)
