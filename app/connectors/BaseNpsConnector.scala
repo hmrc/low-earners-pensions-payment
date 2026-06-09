@@ -19,9 +19,8 @@ package connectors
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException
 import config.AppConfig
-import controllers.requests.CorrelationId
+import models.{CorrelationId, ResponseWrapper}
 import models.errors.*
-import models.response.ResponseWrapper
 import play.api.http.Status.*
 import play.api.libs.json.*
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpReads, HttpResponse}

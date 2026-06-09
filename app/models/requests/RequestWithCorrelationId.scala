@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package models.response
+package models.requests
 
-import controllers.requests.CorrelationId
+import models.CorrelationId
+import play.api.mvc.{Request, WrappedRequest}
 
-case class ResponseWrapper[+A](correlationId: CorrelationId, responseData: A) {
-  def map[B](f: A => B): ResponseWrapper[B] = ResponseWrapper(correlationId, f(responseData))
-}
+case class RequestWithCorrelationId[A](request: Request[A], correlationId: CorrelationId)
+    extends WrappedRequest[A](request)

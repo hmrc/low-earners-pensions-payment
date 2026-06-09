@@ -20,9 +20,9 @@ import base.SpecBase
 import cats.data.EitherT
 import connectors.GetPaymentDetailsConnector
 import controllers.actions.FakeIdentifierAction
+import models.ResponseWrapper
 import models.errors.{ErrorWrapper, LeppError}
 import models.nps.retrieve.RetrieveClaimsResponse
-import models.response.ResponseWrapper
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import play.api.test.FakeRequest

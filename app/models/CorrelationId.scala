@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers.requests
+package models
 
 import scala.language.implicitConversions
 

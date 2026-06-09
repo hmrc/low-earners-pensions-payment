@@ -17,7 +17,7 @@
 package models.response
 
 import base.SpecBase
-import models.response.ResponseWrapper
+import models.ResponseWrapper
 
 class ResponseWrapperSpec extends SpecBase {
   "map" - {

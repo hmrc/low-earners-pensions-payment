@@ -18,10 +18,9 @@ package connectors
 
 import cats.data.EitherT
 import config.AppConfig
-import controllers.requests.CorrelationId
+import models.{CorrelationId, ResponseWrapper}
 import models.errors.ErrorWrapper
 import models.nps.retrieve.RetrieveClaimsResponse
-import models.response.ResponseWrapper
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.http.Status.*
 import uk.gov.hmrc.http.HeaderCarrier

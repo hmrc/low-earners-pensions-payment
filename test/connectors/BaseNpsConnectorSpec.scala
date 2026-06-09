@@ -18,8 +18,8 @@ package connectors
 
 import base.SpecBase
 import config.AppConfig
+import models.ResponseWrapper
 import models.errors.*
-import models.response.ResponseWrapper
 import play.api.http.Status.*
 import play.api.libs.json.{Json, Reads}
 import uk.gov.hmrc.http.*
