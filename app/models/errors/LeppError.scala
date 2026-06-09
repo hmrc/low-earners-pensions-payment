@@ -16,19 +16,26 @@
 
 package models.errors
 
-import play.api.libs.json.{JsString, Json, OWrites}
+import play.api.libs.json.{JsArray, JsObject, JsString, Json, OWrites}
 
 sealed case class LeppError(
   code: String,
-  message: String
+  message: String,
+  pathsOpt: Option[Set[String]] = None
 )
 
 object LeppError {
-  implicit def writes[T <: LeppError]: OWrites[T] = (o: T) =>
+  implicit def writes[T <: LeppError]: OWrites[T] = (o: T) => {
+    val pathsJson: JsObject = o.pathsOpt.fold(JsObject.empty)(
+      paths => Json.obj("paths" -> JsArray(paths.map(JsString(_)).toSeq))
+    )
+    
     Json.obj(
       "code" -> JsString(o.code),
       "message" -> JsString(o.message)
-    )
+    ) ++ pathsJson
+  }
+
 }
 
 object UnauthorisedError
@@ -60,3 +67,24 @@ object UnexpectedStatusError
       code = "UNEXPECTED_STATUS_ERROR",
       message = "An unexpected status code was returned from downstream"
     )
+
+object FormatTaxYearError extends LeppError(
+  code = "TAX_YEAR_FORMAT_ERROR",
+  message = "Tax year parameter failed request body validation"
+)
+
+object MissingRequestBodyError extends LeppError(
+  code = "MISSING_REQUEST_BODY_ERROR",
+  message = "No request body was supplied"
+)
+
+object RequestBodyNotJsonError extends LeppError(
+  code = "REQUEST_BODY_NOT_JSON_ERROR",
+  message = "Supplied request body could not be parsed to JSON"
+)
+
+class FormatRequestBodyError(paths: Set[String]) extends LeppError(
+  code = "REQUEST_BODY_FORMAT_ERROR",
+  message = "Request body failed validation",
+  pathsOpt = Some(paths)
+)
