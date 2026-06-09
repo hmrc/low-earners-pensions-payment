@@ -1,0 +1,342 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Retrieve LEPP Summary Success Response",
+  "license": {
+    "name": "Apache 2.0",
+    "url": "http://www.apache.org/licenses/LICENSE-2.0"
+  },
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "description": "A top-level descriptor for the data state.",
+      "enum": [
+        "NOT_ELIGIBLE",
+        "NO_ACTIONS",
+        "CHECK",
+        "PAYMENTS_AVAILABLE"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "currentLowEarnersOptimisticLock": {
+          "description": "Denotes the version of the data being viewed/processed - if this value is different to what is held in the database, any update requests would be rejected to avoid the risk of overwriting valid data with out of date data. The consumer must first refresh their data before re-attempting to perform any subsequent update requests.",
+          "maximum": 254,
+          "minimum": 0,
+          "type": "integer",
+          "example": 86
+        },
+        "identifier": {
+          "description": "The identifier of which could be either a Temporary Reference Number (TRN) e.g. 00A00000 or a National Insurance Number (NINO) e.g. AA000001A.",
+          "pattern": "^(((?:[ACEHJLMOPRSWXY][A-CEGHJ-NPR-TW-Z]|B[A-CEHJ-NPR-TW-Z]|G[ACEGHJ-NPR-TW-Z]|[KT][A-CEGHJ-MPR-TW-Z]|N[A-CEGHJL-NPR-SW-Z]|Z[A-CEGHJ-NPR-TW-Y])[0-9]{6}[A-D]?)|([0-9]{2}[A-Z]{1}[0-9]{5}))$",
+          "type": "string",
+          "example": "AA000001A"
+        },
+        "lowEarnersDetailsList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/LowEarnersPensionPaymentDetails"
+          }
+        }
+      },
+      "required": [
+        "currentLowEarnersOptimisticLock",
+        "identifier",
+        "lowEarnersDetailsList"
+      ]
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "components": {
+    "schemas": {
+      "LowEarnersPensionPaymentDetails": {
+        "description": "Contains Low Earners Pension Payment details for a given tax year.",
+        "required": [
+          "taxYear",
+          "lowEarnersCalculations"
+        ],
+        "type": "object",
+        "properties": {
+          "taxYear": {
+            "description": "Denotes the tax year (i.e. the year the tax period started, 2023 for a 2023/2024 tax period).",
+            "maximum": 2099,
+            "minimum": 1900,
+            "type": "integer",
+            "example": 2022
+          },
+          "lowEarnersCalculations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LowEarnersCalculation"
+            }
+          }
+        }
+      },
+      "LowEarnersCalculation": {
+        "description": "Contains a record of Low Earners Pension Payment details.",
+        "required": [
+          "lowEarnersClaimDetails",
+          "lowEarnersDataDetails"
+        ],
+        "type": "object",
+        "properties": {
+          "lowEarnersClaimDetails": {
+            "$ref": "#/components/schemas/LowEarnersPensionPaymentClaimDetails"
+          },
+          "lowEarnersDataDetails": {
+            "$ref": "#/components/schemas/LowEarnersPensionPaymentDataDetails"
+          }
+        }
+      },
+      "LowEarnersPensionPaymentClaimDetails": {
+        "description": "Contains the details of a claim for a Low Earner's Pension Payment.",
+        "required": [
+          "claimSequenceNumber",
+          "claimStatus",
+          "inSelfAssessment",
+          "reissueClaimOutput",
+          "reminderOutputSent"
+        ],
+        "type": "object",
+        "properties": {
+          "claimSequenceNumber": {
+            "description": "Unique sequence number representing the position in the Low Earner's Pension Payment claim history (i.e. row) of the Low Earner's Pension Payment details for this individual - this would only be populated if the previous call did not transfer all of the data i.e. there are more rows marked to be collected still.",
+            "maximum": 32766,
+            "minimum": 1,
+            "type": "integer",
+            "example": 123
+          },
+          "entitlementAmount": {
+            "description": "Denotes the amount of an individual's Low Earner's Pension Payment entitlement.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": 0,
+            "type": "number",
+            "example": 10.56
+          },
+          "claimStatus": {
+            "enum": [
+              "CANCELLED",
+              "DECEASED - CAPACITOR",
+              "DECEASED - NO CAPACITOR",
+              "PAID",
+              "PENDING",
+              "PENDING - CAPACITOR",
+              "SUSPENDED - RLS"
+            ],
+            "type": "string"
+          },
+          "inSelfAssessment": {
+            "description": "Denotes whether an individual is in self assessment.",
+            "type": "boolean",
+            "example": true
+          },
+          "calculationDate": {
+            "description": "Denotes the date of when the Low Earner's Pension Payment calculation was performed.",
+            "type": "string",
+            "example": "2022-06-27T00:00:00.000Z"
+          },
+          "claimDate": {
+            "description": "Denotes the date a Low Earner's Pension Payment claim was made.",
+            "type": "string",
+            "example": "2022-06-27T00:00:00.000Z"
+          },
+          "reminderOutputSent": {
+            "description": "Denotes whether to remind an individual about a Low Earner's Pension Payment claim.",
+            "type": "boolean",
+            "example": true
+          },
+          "reissueClaimOutput": {
+            "description": "Denotes whether to re-issue a printed output for a Low Earner's Pension Payment calculation.",
+            "type": "boolean",
+            "example": true
+          },
+          "originalAmount": {
+            "description": "Denotes the original amount from an initial Low Earner's Pension Payment claim.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          }
+        }
+      },
+      "LowEarnersPensionPaymentDataDetails": {
+        "description": "Contains the calculation data of a claim for a Low Earner's Pension Payment.",
+        "required": [
+          "calculationSequenceNumber",
+          "dataSourceMaster"
+        ],
+        "type": "object",
+        "properties": {
+          "responseTimestamp": {
+            "description": "Denotes the timestamp when a Low Earner's Pension Payment reponse was given.",
+            "maxLength": 26,
+            "minLength": 19,
+            "type": "string",
+            "example": "2022-06-27T09:12:28.000Z"
+          },
+          "calculationSequenceNumber": {
+            "description": "Unique sequence number representing the position in the Low Earner's Pension Payment calculation data history (i.e. row) of the Low Earner's Pension Payment details for this individual - this would only be populated if the previous call did not transfer all of the data i.e. there are more rows marked to be collected still.",
+            "maximum": 65534,
+            "minimum": 0,
+            "type": "integer",
+            "example": 123
+          },
+          "dataSourceMaster": {
+            "enum": [
+              "CESA",
+              "ITSA",
+              "NPS"
+            ],
+            "type": "string"
+          },
+          "netPayContributionsTotal": {
+            "description": "Denotes the total net pay contributions.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          },
+          "basicRatePercentage": {
+            "description": "Denotes the basic rate percentage of a Low Earner's Pension Payment.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          },
+          "totalAllowances": {
+            "description": "Denotes the total amount of allowance for a Low Earner's Pension Payment.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          },
+          "totalIncome": {
+            "description": "Denotes the total income of an individual claiming Low Earner's Pension Payment.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          },
+          "totalDeductions": {
+            "description": "Denotes the total amount of deductions for a Low Earner's Pension Payment claim.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          },
+          "totalTaxDue": {
+            "description": "Denotes the total amount of tax due for a Low Earner's Pension Payment claim.",
+            "multipleOf": 0.01,
+            "maximum": 99999999999999.98,
+            "minimum": -99999999999999.98,
+            "type": "number",
+            "example": 10.56
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "status": "PAYMENTS_AVAILABLE",
+      "data": {
+        "currentLowEarnersOptimisticLock": 86,
+        "identifier": "AA000001A",
+        "lowEarnersDetailsList": [
+          {
+            "taxYear": 2022,
+            "lowEarnersCalculations": [
+              {
+                "lowEarnersClaimDetails": {
+                  "claimSequenceNumber": 123,
+                  "calculationDate": "2022-06-27T00:00:00.000Z",
+                  "claimDate": "2022-06-27T00:00:00.000Z",
+                  "claimStatus": "PAID",
+                  "entitlementAmount": 10.56,
+                  "inSelfAssessment": true,
+                  "originalAmount": 10.56,
+                  "reissueClaimOutput": true,
+                  "reminderOutputSent": true
+                },
+                "lowEarnersDataDetails": {
+                  "calculationSequenceNumber": 123,
+                  "basicRatePercentage": 10.56,
+                  "dataSourceMaster": "CESA",
+                  "netPayContributionsTotal": 10.56,
+                  "responseTimestamp": "2022-06-27T09:12:28.000Z",
+                  "totalAllowances": 10.56,
+                  "totalDeductions": 10.56,
+                  "totalIncome": 10.56,
+                  "totalTaxDue": 10.56
+                }
+              },
+              {
+                "lowEarnersClaimDetails": {
+                  "claimSequenceNumber": 123,
+                  "calculationDate": "2022-06-27T00:00:00.000Z",
+                  "claimDate": "2022-06-27T00:00:00.000Z",
+                  "claimStatus": "PENDING",
+                  "entitlementAmount": 10.56,
+                  "inSelfAssessment": true,
+                  "originalAmount": 10.56,
+                  "reissueClaimOutput": true,
+                  "reminderOutputSent": true
+                },
+                "lowEarnersDataDetails": {
+                  "calculationSequenceNumber": 123,
+                  "basicRatePercentage": 10.56,
+                  "dataSourceMaster": "CESA",
+                  "netPayContributionsTotal": 10.56,
+                  "responseTimestamp": "2022-06-27T09:12:28.000Z",
+                  "totalAllowances": 10.56,
+                  "totalDeductions": 10.56,
+                  "totalIncome": 10.56,
+                  "totalTaxDue": 10.56
+                }
+              }
+            ]
+          },
+          {
+            "taxYear": 2023,
+            "lowEarnersCalculations": [
+              {
+                "lowEarnersClaimDetails": {
+                  "claimSequenceNumber": 123,
+                  "calculationDate": "2023-06-27T00:00:00.000Z",
+                  "claimDate": "2023-06-27T00:00:00.000Z",
+                  "claimStatus": "CANCELLED",
+                  "entitlementAmount": 10.56,
+                  "inSelfAssessment": true,
+                  "originalAmount": 10.56,
+                  "reissueClaimOutput": true,
+                  "reminderOutputSent": true
+                },
+                "lowEarnersDataDetails": {
+                  "calculationSequenceNumber": 123,
+                  "basicRatePercentage": 10.56,
+                  "dataSourceMaster": "CESA",
+                  "netPayContributionsTotal": 10.56,
+                  "responseTimestamp": "2023-06-27T09:12:28.000Z",
+                  "totalAllowances": 10.56,
+                  "totalDeductions": 10.56,
+                  "totalIncome": 10.56,
+                  "totalTaxDue": 10.56
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
