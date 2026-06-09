@@ -1,6 +1,6 @@
 # microservice specific routes
-
 GET        /get-payment-details     controllers.GetPaymentDetailsController.getPaymentDetails
+GET        /get-lepp-summary        controllers.GetPaymentDetailsController.getLeppSummary
 
 #######################################
 # BARs verify status (for lockout)

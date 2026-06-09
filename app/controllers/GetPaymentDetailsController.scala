@@ -16,18 +16,24 @@
 
 package controllers
 
+import cats.data.EitherT
 import connectors.GetPaymentDetailsConnector
 import controllers.actions.IdentifierAction
 import controllers.requests.CorrelationId
+import models.errors.ErrorWrapper
+import models.nps.retrieve.RetrieveClaimsResponse
+import models.requests.IdentifierRequest
+import models.response.{GetSummaryResponse, ResponseWrapper}
+import models.response.SummaryStatus.NOT_ELIGIBLE
 import play.api.libs.json.*
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ErrorCodes.*
 import utils.HeaderKey.correlationIdKey
 import utils.Logging
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class GetPaymentDetailsController @Inject()(
@@ -40,27 +46,59 @@ class GetPaymentDetailsController @Inject()(
 
   def getPaymentDetails: Action[AnyContent] = identify.async { implicit request =>
     val methodLoggingContext: String = "getPaymentDetails"
+    
+    getLeppData(methodLoggingContext)(
+      dataMap = response => successResponseToResult(response),
+      errorMap = errorWrapper => {
+        val errorResponse: Result = errorWrapper.error.code match {
+          case BAD_REQUEST_ERROR => BadRequest(Json.toJson(errorWrapper.error))
+          case NOT_FOUND_ERROR => NotFound(Json.toJson(errorWrapper.error))
+          case _ => InternalServerError(Json.toJson(errorWrapper.error))
+        }
+        errorResponse.withHeaders(correlationIdKey -> errorWrapper.correlationId.value)
+      }
+    )
+  }
 
+  def getLeppSummary: Action[AnyContent] = identify.async { implicit request =>
+    val methodLoggingContext: String = "getPtaSummary"
+
+    getLeppData(methodLoggingContext)(
+      dataMap = response => successResponseToResult(response.map(GetSummaryResponse(_))),
+      errorMap = errorWrapper => {
+        val errorResponse: Result = errorWrapper.error.code match {
+          case BAD_REQUEST_ERROR => BadRequest(Json.toJson(errorWrapper.error))
+          case NOT_FOUND_ERROR => Ok(Json.toJson(GetSummaryResponse(NOT_ELIGIBLE, None)))
+          case _ => InternalServerError(Json.toJson(errorWrapper.error))
+        }
+        errorResponse.withHeaders(correlationIdKey -> errorWrapper.correlationId.value)
+      }
+    )
+  }
+
+  protected[controllers] def getLeppData[A](methodLoggingContext: String)
+                                           (dataMap: ResponseWrapper[RetrieveClaimsResponse] => Result, 
+                                            errorMap: ErrorWrapper => Result)
+                                           (implicit request: IdentifierRequest[A]): Future[Result] = {
     implicit val requestCorrelationId: CorrelationId = request.correlationId
 
-    val result =
-      for {
-        response <- connector.retrieveDetails(request.user.nino.value)
-      } yield {
-        infoLog(s"[GetPaymentDetailsController - $methodLoggingContext] ",
-          s"Successfully received payment details with correlationId $requestCorrelationId")
-        Ok(Json.toJson(response.responseData)).withHeaders(correlationIdKey -> response.correlationId.value)
-      }
+    val result: EitherT[Future, ErrorWrapper, Result] = for {
+      response <- connector.retrieveDetails(request.user.nino.value)
+    } yield {
+      infoLog(
+        s"[GetPaymentDetailsController - $methodLoggingContext] ",
+        s"Successfully received payment details with correlationId $requestCorrelationId"
+      )
+      dataMap(response)
+    }
 
-    result.leftMap { errorWrapper =>
-
-      val errorResponse = errorWrapper.error.code match {
-        case BAD_REQUEST_ERROR => BadRequest(Json.toJson(errorWrapper.error))
-        case NOT_FOUND_ERROR => NotFound(Json.toJson(errorWrapper.error))
-        case _ => InternalServerError(Json.toJson(errorWrapper.error))
-      }
-
-      errorResponse.withHeaders(correlationIdKey -> errorWrapper.correlationId.value)
-    }.merge
+    result.leftMap(errorMap).merge
   }
+  
+  protected[controllers] def successResponseToResult[A: Writes](wrappedResponse: ResponseWrapper[A]): Result = 
+    Ok(
+      Json.toJson(wrappedResponse.responseData)
+    ).withHeaders(
+      correlationIdKey -> wrappedResponse.correlationId.value
+    )
 }

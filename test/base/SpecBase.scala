@@ -28,10 +28,13 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
 import play.api.mvc.BodyParsers
 import play.api.test.Helpers.running
-import models.nps.retrieve._
+import models.nps.retrieve.*
+import models.response.GetSummaryResponse
+import models.response.SummaryStatus.NO_ACTIONS
 
 import java.net.URLEncoder
 import scala.reflect.ClassTag
+import scala.util.Random
 
 trait SpecBase
     extends AnyFreeSpec
@@ -43,6 +46,14 @@ trait SpecBase
     with MockitoSugar
     with BeforeAndAfterEach
     with GuiceOneServerPerSuite {
+
+  def generateNino(prefix: String = "AA"): String = {
+    val num = Random.nextInt(1000000)
+    val suffix = "C"
+    val str: String = Random.alphanumeric.filter(_.isLetter).take(2).map(_.toUpper).mkString
+
+    prefix + f"$str$num%06d$suffix".drop(prefix.length)
+  }
 
   val parsers: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
 
@@ -101,6 +112,11 @@ trait SpecBase
     currentLowEarnersOptimisticLock = 123,
     identifier = "id",
     lowEarnersDetailsList = Seq(details)
+  )
+  
+  val getSummaryResponse: GetSummaryResponse = GetSummaryResponse(
+    status = NO_ACTIONS,
+    data = Some(retrieveResponse)
   )
 
 }

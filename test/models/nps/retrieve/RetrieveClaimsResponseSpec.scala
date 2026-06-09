@@ -119,5 +119,15 @@ class RetrieveClaimsResponseSpec extends SpecBase {
         Json.toJson(retrieveResponse) mustBe json
       }
     }
+    
+    "filterByStatus" - {
+      "should return None when no items exist for a given status" in {
+        retrieveResponse.filterByStatus("PENDING") mustBe None 
+      }
+
+      "should return a non-empty list when items exist for a given status" in {
+        retrieveResponse.filterByStatus("CANCELLED") mustBe Some(List(calculation))
+      }
+    }
   }
 }
