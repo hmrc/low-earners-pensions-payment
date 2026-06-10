@@ -70,14 +70,14 @@ class AcceptLeppPaymentRequestValidator {
       if (errPaths.isEmpty) Right(model) else Left(FormatRequestBodyError(errPaths.toSet))
     }
     
-    val result: Either[LeppError, AcceptLeppPaymentRequest] = for {
+    val validationResult: ValidationResult[AcceptLeppPaymentRequest] = for {
       taxYear <- taxYearOrError
       json <- jsonOrError
       requestBody <- requestBodyModelOrError(json)
       validatedBody <- validateRequestBodyModel(requestBody)
     } yield AcceptLeppPaymentRequest(request.user.nino, taxYear, validatedBody)
 
-    result.fold(
+    validationResult.fold(
       err => Left(ErrorWrapper(request.correlationId, err)),
       success => Right(success)
     )

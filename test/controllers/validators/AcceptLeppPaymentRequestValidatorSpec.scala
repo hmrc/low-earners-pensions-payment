@@ -60,11 +60,8 @@ class AcceptLeppPaymentRequestValidatorSpec extends SpecBase {
         result.swap.getOrElse(dummyErrorWrapper) mustBe ErrorWrapper(testCorrelationId, expectedError)
       }
       
-      def optFieldToJson(key: String, valueOpt: Option[String]): JsObject = valueOpt.fold(
-        JsObject.empty
-      )(
-        value => Json.obj(key -> JsString(value))
-      )
+      def optFieldToJson(key: String, valueOpt: Option[String]): JsObject = 
+        valueOpt.fold(JsObject.empty)(value => Json.obj(key -> JsString(value)))
 
       def requestBody(lock: Option[String] = Some("1234"),
                       hasAccountDetails: Boolean = true,
