@@ -17,6 +17,7 @@
 package base
 
 import controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import models.CorrelationId
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -28,10 +29,11 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
 import play.api.mvc.BodyParsers
 import play.api.test.Helpers.running
-import models.nps.retrieve._
+import models.nps.retrieve.*
 
 import java.net.URLEncoder
 import scala.reflect.ClassTag
+import scala.util.Random
 
 trait SpecBase
     extends AnyFreeSpec
@@ -43,6 +45,8 @@ trait SpecBase
     with MockitoSugar
     with BeforeAndAfterEach
     with GuiceOneServerPerSuite {
+  
+  val testCorrelationId: CorrelationId = CorrelationId("test-id")
 
   val parsers: BodyParsers.Default = app.injector.instanceOf[BodyParsers.Default]
 
