@@ -43,7 +43,7 @@ class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: Http
     ec: ExecutionContext,
     correlationId: CorrelationId
   ): ConnectorResult[RetrieveClaimsResponse] = {
-    val retrieveUrl = s"${config.getPaymentDetailsUrl}/$nino/calculation-results"
+    val retrieveUrl = s"${config.npsUrl}/$nino/calculation-results"
 
     val methodLoggingContext: String = "retrieveDetails"
 

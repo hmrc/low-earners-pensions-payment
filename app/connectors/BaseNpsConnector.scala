@@ -31,6 +31,7 @@ import java.util.Base64
 
 abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: Logging =>
   val config: AppConfig
+  val successStatus: Int = OK
 
   private def retrieveCorrelationId(response: HttpResponse): CorrelationId = CorrelationId(
     response.header(correlationIdKey).getOrElse("N/A")
@@ -67,7 +68,7 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
     val methodLoggingContext: String = "httpReads"
     val correlationId: CorrelationId = retrieveCorrelationId(response)
 
-    if (response.status == OK) {
+    if (response.status == successStatus) {
         jsonValidation[Resp](response.body, correlationId, Some(methodLoggingContext))
     } else {
       Left(handleErrorResponse(method, url, response, correlationId, Some(methodLoggingContext)))
