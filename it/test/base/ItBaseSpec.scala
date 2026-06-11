@@ -82,7 +82,7 @@ abstract class ItBaseSpec
       request.withSession(SessionKeys.sessionId -> sessionId)
   }
 
-  lazy val overridingsModule: AbstractModule = new AbstractModule {
+  lazy val overridingModule: AbstractModule = new AbstractModule {
     @Provides
     @unused
     def clock: Clock = {
@@ -91,7 +91,7 @@ abstract class ItBaseSpec
     }
   }
 
-  val overridingGuiceableModule: Seq[GuiceableModule] = Seq(GuiceableModule.fromGuiceModules(List(overridingsModule)))
+  val overridingGuiceableModule: Seq[GuiceableModule] = Seq(GuiceableModule.fromGuiceModules(List(overridingModule)))
 
   val application: Application = new GuiceApplicationBuilder()
     .configure(
@@ -148,20 +148,20 @@ abstract class ItBaseSpec
     originalAmount = Some(10.56)
   )
 
-  private val calculation: LowEarnersCalculation = LowEarnersCalculation(
+  private val leppCalculation: LowEarnersCalculation = LowEarnersCalculation(
     lowEarnersClaimDetails = claimDetails,
     lowEarnersDataDetails = dataDetails
   )
 
-  private val details: LowEarnersDetails = LowEarnersDetails(
+  private val leppDetails: LowEarnersDetails = LowEarnersDetails(
     taxYear = 11,
-    lowEarnersCalculations = Seq(calculation)
+    lowEarnersCalculations = Seq(leppCalculation)
   )
 
   val retrieveResponse: RetrieveClaimsResponse = RetrieveClaimsResponse(
     currentLowEarnersOptimisticLock = 123,
     identifier = "id",
-    lowEarnersDetailsList = Seq(details)
+    lowEarnersDetailsList = Seq(leppDetails)
   )
   
   val dummyRetrieveResponse: RetrieveClaimsResponse = RetrieveClaimsResponse(0, "Zero", Nil)
@@ -215,6 +215,7 @@ abstract class ItBaseSpec
       |{
       | "updatedLowEarnersOptimisticLock": 124
       |}
-    """.stripMargin)
+    """.stripMargin
+  )
   
 }

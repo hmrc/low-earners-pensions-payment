@@ -17,8 +17,10 @@
 package connectors
 
 import base.ItBaseSpec
-import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.{ResponseDefinitionBuilder, WireMock}
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.http.HttpHeaders
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import models.errors.{ErrorWrapper, LeppError}
 import models.nps.accept.{AcceptLeppPaymentRequest, AcceptLeppPaymentRequestBody, AcceptLeppPaymentResponse, LowEarnersAccountDetails}
 import models.nps.retrieve.RetrieveClaimsResponse
@@ -33,12 +35,41 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.ErrorCodes.{CONFLICT_ERROR, INTERNAL_ERROR, SERVICE_UNAVAILABLE_ERROR}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
 
   trait Test {
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val correlationId: CorrelationId = "X-123"
+
+    val nino: String = "AA123456C"
+    val taxYear: BigInt = 2025
+    val npsUrl = s"/paye/low-earners/$nino/tax-year/$taxYear/payment-claims"
+
+    val accountDetails: LowEarnersAccountDetails = LowEarnersAccountDetails(
+      accountName = "Name",
+      accountNumber = "12345678",
+      sortCode = "123456",
+      rollNumber = Some("roll")
+    )
+
+    val requestBody: AcceptLeppPaymentRequestBody = AcceptLeppPaymentRequestBody(
+      currentLowEarnersOptimisticLock = 1234,
+      lowEarnersAccountDetails = accountDetails
+    )
+    val requestBodyJson: String = Json.toJson(requestBody).toString
+
+    val request: AcceptLeppPaymentRequest = AcceptLeppPaymentRequest(
+      identifier = Nino(nino),
+      taxYear = taxYear,
+      body = requestBody
+    )
+
+    val responseJsonString: String = acceptResponseJson.toString
+
     val application: Application = new GuiceApplicationBuilder()
       .configure(
         "microservice.services.nps.port" -> wireMockPort,
@@ -47,97 +78,82 @@ class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
       .build()
 
     val connector: AcceptLeppPaymentConnector = application.injector.instanceOf[AcceptLeppPaymentConnector]
-
-    implicit val hc: HeaderCarrier = HeaderCarrier()
-    implicit val correlationId: CorrelationId = "X-123"
-    implicit lazy val actorSystem: ActorSystem = app.actorSystem
-    implicit lazy val materializer: Materializer = app.materializer
-
+    
+    def mockNpsResult(npsStatus: Int,
+                      bodyOpt: Option[String],
+                      cidOpt: Option[CorrelationId] = Some("X-123")): StubMapping = {
+      val response: ResponseDefinitionBuilder = aResponse().withStatus(npsStatus)
+      val responseWithBodyOpt = bodyOpt.map(response.withBody).getOrElse(response)
+      
+      val responseWithCidOpt = cidOpt.map(
+        cid => response.withHeader("correlationId", cid.value)
+      ).getOrElse(responseWithBodyOpt)
+      
+      stubPost(
+        url = npsUrl,
+        requestBody = requestBodyJson,
+        response = responseWithCidOpt
+      )
+    }
+    
+    lazy val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
+      await(connector.acceptPayment(request).value)
   }
 
   "AcceptLeppPaymentConnector" -> {
-    val nino: String = "AA123456C"
-    val taxYear: BigInt = 2025
-
-    val accountDetails: LowEarnersAccountDetails = LowEarnersAccountDetails(
-      accountName = "Name", accountNumber = "12345678", sortCode = "123456", rollNumber = Some("roll")
-    )
-    val requestBody: AcceptLeppPaymentRequestBody = AcceptLeppPaymentRequestBody(
-      currentLowEarnersOptimisticLock = 1234, lowEarnersAccountDetails = accountDetails
-    )
-    val requestBodyJson: String = Json.toJson(requestBody).toString
-    
-    val request: AcceptLeppPaymentRequest = AcceptLeppPaymentRequest(
-      identifier = Nino(nino),
-      taxYear = taxYear,
-      body = requestBody
-    )
-
     "acceptPayment" -> {
-      val npsUrl = s"/paye/low-earners/$nino/tax-year/$taxYear/payment-claims"
+      def handleForErrorScenario(npsStatus: Int, expectedError: String): Unit = {
+        s"[acceptPayment] should return an error with code: $expectedError when NPS returns status: $npsStatus" in new Test {
+          mockNpsResult(npsStatus = npsStatus, bodyOpt = None)
+          
+          result mustBe a[Left[_, _]]
+          result.swap
+            .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
+            .error
+            .code mustBe expectedError
+
+          WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
+        }
+      }
+
+      Seq(
+        (BAD_REQUEST, INTERNAL_ERROR),
+        (FORBIDDEN, INTERNAL_ERROR),
+        (NOT_FOUND, INTERNAL_ERROR),
+        (CONFLICT, CONFLICT_ERROR),
+        (UNPROCESSABLE_ENTITY, INTERNAL_ERROR),
+        (INTERNAL_SERVER_ERROR, INTERNAL_ERROR),
+        (SERVICE_UNAVAILABLE, INTERNAL_ERROR)
+      ).foreach(handleForErrorScenario)
 
       "[acceptPayment] should return the expected result when NPS returns an unrecognised error code" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = aResponse().withStatus(IM_A_TEAPOT).withHeader(correlationId.value, "X-123")
-        )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
-
-        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
+        mockNpsResult(npsStatus = IM_A_TEAPOT, bodyOpt = None)
 
         result mustBe a[Left[_, _]]
         result.swap
           .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
           .error
           .code mustBe "UNEXPECTED_STATUS_ERROR"
+
+        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
       
-      "[acceptPayment] should return NOT_FOUND_ERROR when NPS returns an NOT_FOUND status code" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = aResponse().withStatus(NOT_FOUND).withHeader(correlationId.value, "X-123")
-        )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
-
-        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
-
-        result mustBe a[Left[_, _]]
-        result.swap
-          .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
-          .error
-          .code mustBe "NOT_FOUND"
-      }
-
       "[acceptPayment] should return the expected result when NPS returns an unparsable CREATED response" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = created().withBody("").withHeader(correlationId.value, "X-123")
-        )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
-
-        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
-
+        mockNpsResult(npsStatus = CREATED, bodyOpt = Some(""))
+        
         result mustBe a[Left[_, _]]
         result.swap
           .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
           .error
           .code mustBe "INTERNAL_SERVER_ERROR"
+
+        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
 
       "[acceptPayment] should return the expected result when NPS returns an invalid CREATED response" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = created().withBody(
+        mockNpsResult(
+          npsStatus = CREATED,
+          bodyOpt = Some(
             """
               |{
               | "updatedLowEarnersOptimisticLock": "one"
@@ -145,70 +161,47 @@ class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
             """.stripMargin
           )
         )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
-
-        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
-
+        
         result mustBe a[Left[_, _]]
         result.swap
           .getOrElse(ErrorWrapper(correlationId, LeppError("N/A", "N/A")))
           .error
           .code mustBe "INTERNAL_SERVER_ERROR"
-      }
-
-      val responseJsonString: String = acceptResponseJson.toString
-
-      "[acceptPayment] should return the expected result when NPS returns a valid CREATED response" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = created().withBody(responseJsonString).withHeader(correlationId.value, "X-123")
-        )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
 
         WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
-
+      }
+      
+      "[acceptPayment] should return the expected result when NPS returns a valid CREATED response" in new Test {
+        mockNpsResult(npsStatus = CREATED, bodyOpt = Some(responseJsonString))
+        
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
+        result
+          .getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
           .responseData mustBe acceptResponse
+        
+        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
 
       "[acceptPayment] should handle appropriately when correlation ID is missing for a success" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = created().withBody(responseJsonString)
-        )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
-
-        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
-
+        mockNpsResult(npsStatus = CREATED, bodyOpt = Some(responseJsonString), cidOpt = None)
+        
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
+        result
+          .getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
           .responseData mustBe acceptResponse
+        
+        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
 
       "[acceptPayment] should handle appropriately when correlation ID is non-matching for a success" in new Test {
-        stubPost(
-          url = npsUrl,
-          requestBody = requestBodyJson,
-          response = created().withBody(responseJsonString).withHeader("correlationId", "NotMatching")
-        )
-
-        val result: Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]] =
-          await(connector.acceptPayment(request).value)
-
-        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
-
+        mockNpsResult(npsStatus = CREATED, bodyOpt = Some(responseJsonString), cidOpt = Some("not-matching"))
+        
         result mustBe a[Right[_, _]]
-        result.getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
+        result
+          .getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
           .responseData mustBe acceptResponse
+        
+        WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
     }
   }

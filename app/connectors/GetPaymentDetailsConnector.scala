@@ -16,7 +16,6 @@
 
 package connectors
 
-import cats.data.EitherT
 import config.AppConfig
 import models.{CorrelationId, ResponseWrapper}
 import models.errors.ErrorWrapper
@@ -47,7 +46,7 @@ class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: Http
 
     val methodLoggingContext: String = "retrieveDetails"
 
-    EitherT(
+    handleConnectorResult(methodLoggingContext)(
       http
         .get(URI.create(retrieveUrl).toURL)
         .setHeader(
@@ -57,19 +56,6 @@ class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: Http
           (ENVIRONMENT, config.npsEnv)
         )
         .execute[Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]]]
-    ).bimap(
-      err => {
-        val resultCorrelationId: CorrelationId = checkIdsMatch(
-          requestCorrelationId = correlationId,
-          responseCorrelationId = err.correlationId,
-          extraLoggingContext = Some(methodLoggingContext)
-        )
-        err.copy(correlationId = resultCorrelationId)
-      },
-      resp => {
-        val resultCorrelationId = checkIdsMatch(correlationId, resp.correlationId, Some(methodLoggingContext))
-        resp.copy(correlationId = resultCorrelationId)
-      }
     )
   }
 

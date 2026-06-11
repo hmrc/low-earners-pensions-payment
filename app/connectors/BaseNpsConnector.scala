@@ -16,6 +16,7 @@
 
 package connectors
 
+import cats.data.EitherT
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException
 import config.AppConfig
@@ -28,6 +29,7 @@ import utils.Logging
 import utils.HeaderKey.correlationIdKey
 
 import java.util.Base64
+import scala.concurrent.{ExecutionContext, Future}
 
 abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: Logging =>
   val config: AppConfig
@@ -122,5 +124,24 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
       case None =>
         ErrorWrapper(correlationId, UnexpectedStatusError)
     }
+  }
+  
+  def handleConnectorResult(methodLoggingContext: String)
+                           (result: Future[Either[ErrorWrapper, ResponseWrapper[Resp]]])
+                           (implicit reqCid: CorrelationId, ec: ExecutionContext): ConnectorResult[Resp] = {
+    EitherT(result).bimap(
+      err => {
+        val resultCorrelationId: CorrelationId = checkIdsMatch(
+          requestCorrelationId = reqCid,
+          responseCorrelationId = err.correlationId,
+          extraLoggingContext = Some(methodLoggingContext)
+        )
+        err.copy(correlationId = resultCorrelationId)
+      },
+      resp => {
+        val resultCorrelationId = checkIdsMatch(reqCid, resp.correlationId, Some(methodLoggingContext))
+        resp.copy(correlationId = resultCorrelationId)
+      }
+    )
   }
 }

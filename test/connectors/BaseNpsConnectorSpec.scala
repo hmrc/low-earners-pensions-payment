@@ -24,6 +24,11 @@ import play.api.http.Status.*
 import play.api.libs.json.{Json, Reads}
 import uk.gov.hmrc.http.*
 import utils.Logging
+import models.CorrelationId
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class BaseNpsConnectorSpec extends SpecBase {
 
@@ -161,6 +166,63 @@ class BaseNpsConnectorSpec extends SpecBase {
 
       result mustBe a[Left[_, _]]
       result.swap.getOrElse(ErrorWrapper(correlationId, InternalLeppError)).error.code mustBe "INTERNAL_SERVER_ERROR"
+    }
+  }
+  
+  "handleConnectorResult" -> {
+    val dummySuccess: ResponseWrapper[DummyClass] = ResponseWrapper(CorrelationId("dummy-id"), DummyClass("dummy-value"))
+    val dummyError: ErrorWrapper = ErrorWrapper(CorrelationId("dummy-id"), LeppError("N/A", "N/A"))
+
+    "[handleConnectorResult] should handle correctly for success result with matching correlation ID" in {
+      implicit val cid: CorrelationId = CorrelationId(correlationId)
+
+      val result: Either[ErrorWrapper, ResponseWrapper[DummyClass]] = await(
+        TestObject.handleConnectorResult("some-context")(
+          Future.successful(Right(ResponseWrapper(CorrelationId(correlationId), DummyClass("some-value"))))
+        ).value
+      )
+
+      result mustBe a[Right[_, _]]
+      result.getOrElse(dummySuccess) mustBe ResponseWrapper(cid, DummyClass("some-value"))
+    }
+
+    "[handleConnectorResult] should handle correctly for success result with non-matching correlation ID" in {
+      implicit val cid: CorrelationId = CorrelationId(correlationId)
+
+      val result: Either[ErrorWrapper, ResponseWrapper[DummyClass]] = await(
+        TestObject.handleConnectorResult("some-context")(
+          Future.successful(Right(ResponseWrapper(CorrelationId("other-id"), DummyClass("some-value"))))
+        ).value
+      )
+
+      result mustBe a[Right[_, _]]
+      result.getOrElse(dummySuccess) mustBe ResponseWrapper(cid, DummyClass("some-value"))
+    }
+
+    "[handleConnectorResult] should handle correctly for error result with matching correlation ID" in {
+      implicit val cid: CorrelationId = CorrelationId(correlationId)
+
+      val result: Either[ErrorWrapper, ResponseWrapper[DummyClass]] = await(
+        TestObject.handleConnectorResult("some-context")(
+          Future.successful(Left(ErrorWrapper(CorrelationId(correlationId), LeppError("some-error", "msg"))))
+        ).value
+      )
+
+      result mustBe a[Left[_, _]]
+      result.swap.getOrElse(dummyError) mustBe ErrorWrapper(cid, LeppError("some-error", "msg"))
+    }
+
+    "[handleConnectorResult] should handle correctly for error result with non-matching correlation ID" in {
+      implicit val cid: CorrelationId = CorrelationId(correlationId)
+
+      val result: Either[ErrorWrapper, ResponseWrapper[DummyClass]] = await(
+        TestObject.handleConnectorResult("some-context")(
+          Future.successful(Left(ErrorWrapper(CorrelationId("other-id"), LeppError("some-error", "msg"))))
+        ).value
+      )
+
+      result mustBe a[Left[_, _]]
+      result.swap.getOrElse(dummyError) mustBe ErrorWrapper(cid, LeppError("some-error", "msg"))
     }
   }
 

@@ -16,7 +16,6 @@
 
 package connectors
 
-import cats.data.EitherT
 import com.google.inject.Singleton
 import config.AppConfig
 import models.errors.ErrorWrapper
@@ -50,7 +49,7 @@ class AcceptLeppPaymentConnector @Inject()(val config: AppConfig, val http: Http
     val methodLoggingContext: String = "acceptPayment"
     val acceptPaymentUrl = s"${config.npsUrl}/${request.identifier}/tax-year/${request.taxYear}/payment-claims"
     
-    EitherT(
+    handleConnectorResult(methodLoggingContext)(
       http
         .post(URI.create(acceptPaymentUrl).toURL)
         .setHeader(
@@ -61,29 +60,16 @@ class AcceptLeppPaymentConnector @Inject()(val config: AppConfig, val http: Http
         )
         .withBody(Json.toJson(request.body))
         .execute[Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]]]
-    ).bimap(
-      err => {
-        val resultCorrelationId: CorrelationId = checkIdsMatch(
-          requestCorrelationId = correlationId,
-          responseCorrelationId = err.correlationId,
-          extraLoggingContext = Some(methodLoggingContext)
-        )
-        err.copy(correlationId = resultCorrelationId)
-      },
-      resp => {
-        val resultCorrelationId = checkIdsMatch(correlationId, resp.correlationId, Some(methodLoggingContext))
-        resp.copy(correlationId = resultCorrelationId)
-      }
     )
   }
 
   override protected[connectors] val errorMap: Map[Int, String] = Map(
-    BAD_REQUEST -> BAD_REQUEST_ERROR,
-    FORBIDDEN -> FORBIDDEN_ERROR,
-    NOT_FOUND -> NOT_FOUND_ERROR,
+    BAD_REQUEST -> INTERNAL_ERROR,
+    FORBIDDEN -> INTERNAL_ERROR,
+    NOT_FOUND -> INTERNAL_ERROR,
     CONFLICT -> CONFLICT_ERROR,
-    UNPROCESSABLE_ENTITY -> UNPROCESSABLE_ERROR,
+    UNPROCESSABLE_ENTITY -> INTERNAL_ERROR,
     INTERNAL_SERVER_ERROR -> INTERNAL_ERROR,
-    SERVICE_UNAVAILABLE -> SERVICE_UNAVAILABLE_ERROR
+    SERVICE_UNAVAILABLE -> INTERNAL_ERROR
   )
 }
