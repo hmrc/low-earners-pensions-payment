@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package base
+package common
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.*

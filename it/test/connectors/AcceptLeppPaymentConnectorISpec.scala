@@ -16,10 +16,10 @@
 
 package connectors
 
-import base.ItBaseSpec
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.client.{ResponseDefinitionBuilder, WireMock}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import common.ItBaseSpec
 import models.errors.{ErrorWrapper, LeppError}
 import models.nps.accept.{AcceptLeppPaymentRequest, AcceptLeppPaymentRequestBody, AcceptLeppPaymentResponse, LowEarnersAccountDetails}
 import models.{CorrelationId, ResponseWrapper}

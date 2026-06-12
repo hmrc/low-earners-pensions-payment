@@ -16,9 +16,9 @@
 
 package connectors
 
-import base.ItBaseSpec
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import common.ItBaseSpec
 import models.{CorrelationId, ResponseWrapper}
 import models.errors.{ErrorWrapper, LeppError}
 import models.nps.retrieve.RetrieveClaimsResponse

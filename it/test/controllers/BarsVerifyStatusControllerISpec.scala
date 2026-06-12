@@ -16,7 +16,7 @@
 
 package controllers
 
-import base.ItBaseSpec
+import common.ItBaseSpec
 import config.AppConfig
 import models.bars.{BarsUpdateVerifyStatusParams, BarsVerifyStatusId, EncryptedBarsVerifyStatus, NumberOfBarsVerifyAttempts}
 import org.mongodb.scala.SingleObservableFuture

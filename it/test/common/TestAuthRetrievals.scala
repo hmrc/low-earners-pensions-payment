@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package base
+package common
 
 import uk.gov.hmrc.auth.core.retrieve.~
 

@@ -16,19 +16,20 @@
 
 package controllers
 
-import base.ItBaseSpec
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import common.ItBaseSpec
 import config.AppConfig
 import models.nps.accept.AcceptLeppPaymentResponse
 import org.mockito.Mockito.reset
 import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.Play.materializer
 import play.api.http.Status.*
+import play.api.http.Writeable
 import play.api.libs.json.{JsObject, JsValue, Json}
-import play.api.mvc.{AnyContent, AnyContentAsEmpty, AnyContentAsText, Result}
+import play.api.mvc.{AnyContentAsEmpty, AnyContentAsJson, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{contentAsJson, contentAsString, defaultAwaitTimeout, status}
+import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, route, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsJson, writeableOf_AnyContentAsText}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.ErrorCodes.*
@@ -44,7 +45,7 @@ class AcceptLeppPaymentControllerISpec extends ItBaseSpec {
     reset(mockAuthConnector)
     reset(mockAppConfig)
   }
-  
+
   trait Test {
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -54,17 +55,17 @@ class AcceptLeppPaymentControllerISpec extends ItBaseSpec {
     val responseJson: JsValue = acceptResponseJson
     val responseModel: AcceptLeppPaymentResponse = acceptResponseModel
     
-    def fakeRequest(requestBodyOpt: Option[JsValue] = Some(requestJson)): FakeRequest[AnyContent] = {
-      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(
-        method = "POST",
-        path = s"/low-earners-pensions-payment/accept-payment/$taxYear"
-      )
+    lazy val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(
+      method = "POST",
+      path = s"/low-earners-pensions-payment/accept-payment/$taxYear"
+    )
 
-      requestBodyOpt.fold(request)(body => request.withJsonBody(body))
+    def fakeRequestWithBody(requestBody: JsValue = requestJson): FakeRequest[AnyContentAsJson] = {
+      fakeRequest.withJsonBody(requestBody)
     }
-    
+
     lazy val postUrl: String = s"/paye/low-earners/$nino/tax-year/$taxYear/payment-claims"
-    
+
     def setupStubs(requestBody: String = acceptRequestBodyJson,
                    postStatus: Int,
                    postBody: String): StubMapping = {
@@ -77,7 +78,9 @@ class AcceptLeppPaymentControllerISpec extends ItBaseSpec {
       stub
     }
 
-    val controller: AcceptLeppPaymentController = application.injector.instanceOf[AcceptLeppPaymentController]
+    def createResult[A: Writeable](request: FakeRequest[A]): Future[Result] = route(application, request).getOrElse(
+      Future.failed(new RuntimeException("TEST_ERROR"))
+    )
   }
 
   "AcceptLeppPaymentController" when {
@@ -90,7 +93,7 @@ class AcceptLeppPaymentControllerISpec extends ItBaseSpec {
               postBody = ""
             )
 
-            val result: Future[Result] = controller.acceptPayment("2025")(fakeRequest())
+            val result: Future[Result] = createResult(fakeRequestWithBody())
 
             status(result) mustBe expectedErrorStatus
             val content: String = contentAsJson(result).toString
@@ -108,21 +111,21 @@ class AcceptLeppPaymentControllerISpec extends ItBaseSpec {
           (IM_A_TEAPOT, UNEXPECTED_STATUS_ERROR, INTERNAL_SERVER_ERROR)
         )
 
-        errorCases.foreach(npsErrorTest) 
+        errorCases.foreach(npsErrorTest)
       }
-      
+
       "request errors occur" should {
         "should return the expected error when tax year parameter is invalid" in new Test {
           override val taxYear: String = "ABCD"
-          val result: Future[Result] = controller.acceptPayment("ABCD")(fakeRequest())
+          val result: Future[Result] = createResult(fakeRequestWithBody())
 
           status(result) mustBe BAD_REQUEST
           val content: String = contentAsJson(result).toString
           content must include("TAX_YEAR_FORMAT_ERROR")
         }
-        
+
         "should return the expected error when request body is missing" in new Test {
-          val result: Future[Result] = controller.acceptPayment("2025")(fakeRequest(None))
+          val result: Future[Result] = createResult(fakeRequest)
 
           status(result) mustBe BAD_REQUEST
           val content: String = contentAsJson(result).toString
@@ -130,34 +133,29 @@ class AcceptLeppPaymentControllerISpec extends ItBaseSpec {
         }
 
         "should return the expected error when request body isn't valid JSON" in new Test {
-          val request: FakeRequest[AnyContentAsText] = FakeRequest(
-            method = "POST",
-            path = s"/low-earners-pensions-payment/accept-payment/$taxYear"
-          ).withTextBody("NOT_JSON")
-          
-          val result: Future[Result] = controller.acceptPayment("2025")(request)
+          val result: Future[Result] = createResult(fakeRequest.withTextBody("NOT_JSON"))
 
           status(result) mustBe BAD_REQUEST
           val content: String = contentAsJson(result).toString
           content must include("REQUEST_BODY_NOT_JSON_ERROR")
         }
-        
+
         "should return the expected error when request body JSON has invalid format" in new Test {
-          val result: Future[Result] = controller.acceptPayment("2025")(fakeRequest(Some(JsObject.empty)))
+          val result: Future[Result] = createResult(fakeRequestWithBody(JsObject.empty))
 
           status(result) mustBe BAD_REQUEST
           val content: String = contentAsJson(result).toString
           content must include("REQUEST_BODY_FORMAT_ERROR")
         }
       }
-      
+
       "NPS returns a success response should handle as expected" in new Test {
         setupStubs(
           postStatus = CREATED,
           postBody = responseJson.toString
         )
 
-        val result: Future[Result] = controller.acceptPayment("2025")(fakeRequest())
+        val result: Future[Result] = createResult(fakeRequestWithBody())
 
         status(result) mustBe CREATED
         contentAsJson(result) mustBe Json.toJson(responseModel)
