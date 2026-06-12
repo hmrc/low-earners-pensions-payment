@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package controllers.validators
 
 import base.SpecBase
@@ -101,15 +117,14 @@ class AcceptLeppPaymentRequestValidatorSpec extends SpecBase {
       val incorrectRollNumberBody: JsValue = requestBody(rollNumber = Some("####"))
       
       val multipleErrorsBody: JsValue = requestBody(
-        lock = None,
-        accountNumber = None,
-        accountName = None,
-        sortCode = None,
-        rollNumber = Some("!!!!")
+        lock = Some("1"),
+        accountNumber = Some(""),
+        accountName = Some(""),
+        sortCode = Some(""),
+        rollNumber = Some("")
       )
       
       val multipleErrorsPaths: Set[String] = Set(
-        s"/$lockText",
         s"$jsPath/accountNumber",
         s"$jsPath/accountName",
         s"$jsPath/sortCode",

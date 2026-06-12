@@ -28,9 +28,10 @@ import scala.util.matching.Regex
 @Singleton
 class AcceptLeppPaymentRequestValidator {
   private type ValidationResult[R] = Either[LeppError, R]
-  
+
   def validate[A](taxYear: String)
                  (implicit request: IdentifierRequest[AnyContent]): Either[ErrorWrapper, AcceptLeppPaymentRequest] = {
+
     
     val taxYearFormat: Regex = "^[0-9]{4}$".r
     val taxYearOrError: ValidationResult[BigInt] = if (taxYearFormat.matches(taxYear)) {
@@ -38,13 +39,13 @@ class AcceptLeppPaymentRequestValidator {
     } else {
       Left(FormatTaxYearError)
     }
-    
+
     val jsonOrError: ValidationResult[JsValue] = if (request.request.hasBody) {
       request.body.asJson.fold(Left(RequestBodyNotJsonError))(json => Right(json))
     } else {
       Left(MissingRequestBodyError)
     }
-    
+
     def requestBodyModelOrError(json: JsValue) = json.validate[AcceptLeppPaymentRequestBody] match {
       case JsSuccess(value, path) => Right(value)
       case JsError(errors) => Left(FormatRequestBodyError(errors.map(_._1.toString).toSet))
@@ -56,7 +57,7 @@ class AcceptLeppPaymentRequestValidator {
       } else {
         Some(fieldPath)
       }
-    
+
     def validateRequestBodyModel(model: AcceptLeppPaymentRequestBody): ValidationResult[AcceptLeppPaymentRequestBody] = {
       import model.lowEarnersAccountDetails._
       val accountDetailsPath: String = "/lowEarnersAccountDetails"
@@ -69,7 +70,7 @@ class AcceptLeppPaymentRequestValidator {
       
       if (errPaths.isEmpty) Right(model) else Left(FormatRequestBodyError(errPaths.toSet))
     }
-    
+
     val validationResult: ValidationResult[AcceptLeppPaymentRequest] = for {
       taxYear <- taxYearOrError
       json <- jsonOrError

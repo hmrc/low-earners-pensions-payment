@@ -22,7 +22,7 @@ import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import com.google.inject.{AbstractModule, Provides}
 import controllers.actions.{FakeIdentifierAction, IdentifierAction}
-import models.nps.accept.AcceptLeppPaymentResponse
+import models.nps.accept.{AcceptLeppPaymentRequestBody, AcceptLeppPaymentResponse, LowEarnersAccountDetails}
 import models.nps.retrieve.{LowEarnersCalculation, LowEarnersClaimDetails, LowEarnersDataDetails, LowEarnersDetails, RetrieveClaimsResponse}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.ScalaFutures
@@ -206,7 +206,20 @@ abstract class ItBaseSpec
     """.stripMargin
   )
 
-  val acceptResponse: AcceptLeppPaymentResponse = AcceptLeppPaymentResponse(updatedLowEarnersOptimisticLock = 124)
+  val accountDetails: LowEarnersAccountDetails = LowEarnersAccountDetails(
+    accountName = "Name",
+    accountNumber = "12345678",
+    sortCode = "123456",
+    rollNumber = Some("ROLL")
+  )
+
+  val acceptRequestBodyModel: AcceptLeppPaymentRequestBody = AcceptLeppPaymentRequestBody(
+    currentLowEarnersOptimisticLock = 1234,
+    lowEarnersAccountDetails = accountDetails
+  )
+  val acceptRequestBodyJson: String = Json.toJson(acceptRequestBodyModel).toString
+
+  val acceptResponseModel: AcceptLeppPaymentResponse = AcceptLeppPaymentResponse(updatedLowEarnersOptimisticLock = 124)
 
   val dummyAcceptResponse: AcceptLeppPaymentResponse = AcceptLeppPaymentResponse(updatedLowEarnersOptimisticLock = 999)
   

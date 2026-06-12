@@ -17,16 +17,12 @@
 package connectors
 
 import base.ItBaseSpec
-import com.github.tomakehurst.wiremock.client.{ResponseDefinitionBuilder, WireMock}
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import com.github.tomakehurst.wiremock.http.HttpHeaders
+import com.github.tomakehurst.wiremock.client.{ResponseDefinitionBuilder, WireMock}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import models.errors.{ErrorWrapper, LeppError}
 import models.nps.accept.{AcceptLeppPaymentRequest, AcceptLeppPaymentRequestBody, AcceptLeppPaymentResponse, LowEarnersAccountDetails}
-import models.nps.retrieve.RetrieveClaimsResponse
 import models.{CorrelationId, ResponseWrapper}
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.Materializer
 import org.scalactic.Prettifier.default
 import play.api.Application
 import play.api.http.Status.*
@@ -35,7 +31,7 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.ErrorCodes.{CONFLICT_ERROR, INTERNAL_ERROR, SERVICE_UNAVAILABLE_ERROR}
+import utils.ErrorCodes.{BAD_REQUEST_ERROR, CONFLICT_ERROR, FORBIDDEN_ERROR, INTERNAL_ERROR, NOT_FOUND_ERROR, SERVICE_UNAVAILABLE_ERROR, UNPROCESSABLE_ERROR}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -117,13 +113,13 @@ class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
       }
 
       Seq(
-        (BAD_REQUEST, INTERNAL_ERROR),
-        (FORBIDDEN, INTERNAL_ERROR),
-        (NOT_FOUND, INTERNAL_ERROR),
+        (BAD_REQUEST, BAD_REQUEST_ERROR),
+        (FORBIDDEN, FORBIDDEN_ERROR),
+        (NOT_FOUND, NOT_FOUND_ERROR),
         (CONFLICT, CONFLICT_ERROR),
-        (UNPROCESSABLE_ENTITY, INTERNAL_ERROR),
+        (UNPROCESSABLE_ENTITY, UNPROCESSABLE_ERROR),
         (INTERNAL_SERVER_ERROR, INTERNAL_ERROR),
-        (SERVICE_UNAVAILABLE, INTERNAL_ERROR)
+        (SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE_ERROR)
       ).foreach(handleForErrorScenario)
 
       "[acceptPayment] should return the expected result when NPS returns an unrecognised error code" in new Test {
@@ -177,7 +173,7 @@ class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
         result mustBe a[Right[_, _]]
         result
           .getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
-          .responseData mustBe acceptResponse
+          .responseData mustBe acceptResponseModel
         
         WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
@@ -188,7 +184,7 @@ class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
         result mustBe a[Right[_, _]]
         result
           .getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
-          .responseData mustBe acceptResponse
+          .responseData mustBe acceptResponseModel
         
         WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }
@@ -199,7 +195,7 @@ class AcceptLeppPaymentConnectorISpec extends ItBaseSpec {
         result mustBe a[Right[_, _]]
         result
           .getOrElse(ResponseWrapper(correlationId, dummyAcceptResponse))
-          .responseData mustBe acceptResponse
+          .responseData mustBe acceptResponseModel
         
         WireMock.verify(postRequestedFor(urlEqualTo(npsUrl)))
       }

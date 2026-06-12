@@ -24,6 +24,10 @@ sealed case class LeppError(
   pathsOpt: Option[Set[String]] = None
 )
 
+sealed class ValidationError(code: String,
+                             message: String,
+                             pathsOpt: Option[Set[String]] = None) extends LeppError(code, message, pathsOpt)
+
 object LeppError {
   implicit def writes[T <: LeppError]: OWrites[T] = (o: T) => {
     val pathsJson: JsObject = o.pathsOpt.fold(JsObject.empty)(
@@ -68,22 +72,22 @@ object UnexpectedStatusError
       message = "An unexpected status code was returned from downstream"
     )
 
-object FormatTaxYearError extends LeppError(
+object FormatTaxYearError extends ValidationError(
   code = "TAX_YEAR_FORMAT_ERROR",
   message = "Tax year parameter failed request body validation"
 )
 
-object MissingRequestBodyError extends LeppError(
+object MissingRequestBodyError extends ValidationError(
   code = "MISSING_REQUEST_BODY_ERROR",
   message = "No request body was supplied"
 )
 
-object RequestBodyNotJsonError extends LeppError(
+object RequestBodyNotJsonError extends ValidationError(
   code = "REQUEST_BODY_NOT_JSON_ERROR",
   message = "Supplied request body could not be parsed to JSON"
 )
 
-class FormatRequestBodyError(paths: Set[String]) extends LeppError(
+class FormatRequestBodyError(paths: Set[String]) extends ValidationError(
   code = "REQUEST_BODY_FORMAT_ERROR",
   message = "Request body failed validation",
   pathsOpt = Some(paths)
