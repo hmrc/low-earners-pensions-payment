@@ -16,12 +16,12 @@
 
 package connectors
 
+import cats.data.EitherT
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonMappingException
 import config.AppConfig
-import controllers.requests.CorrelationId
+import models.{CorrelationId, ResponseWrapper}
 import models.errors.*
-import models.response.ResponseWrapper
 import play.api.http.Status.*
 import play.api.libs.json.*
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpReads, HttpResponse}
@@ -29,9 +29,11 @@ import utils.Logging
 import utils.HeaderKey.correlationIdKey
 
 import java.util.Base64
+import scala.concurrent.{ExecutionContext, Future}
 
 abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: Logging =>
   val config: AppConfig
+  val successStatus: Int = OK
 
   private def retrieveCorrelationId(response: HttpResponse): CorrelationId = CorrelationId(
     response.header(correlationIdKey).getOrElse("N/A")
@@ -68,7 +70,7 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
     val methodLoggingContext: String = "httpReads"
     val correlationId: CorrelationId = retrieveCorrelationId(response)
 
-    if (response.status == OK) {
+    if (response.status == successStatus) {
         jsonValidation[Resp](response.body, correlationId, Some(methodLoggingContext))
     } else {
       Left(handleErrorResponse(method, url, response, correlationId, Some(methodLoggingContext)))
@@ -122,5 +124,24 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
       case None =>
         ErrorWrapper(correlationId, UnexpectedStatusError)
     }
+  }
+  
+  def handleConnectorResult(methodLoggingContext: String)
+                           (result: Future[Either[ErrorWrapper, ResponseWrapper[Resp]]])
+                           (implicit reqCid: CorrelationId, ec: ExecutionContext): ConnectorResult[Resp] = {
+    EitherT(result).bimap(
+      err => {
+        val resultCorrelationId: CorrelationId = checkIdsMatch(
+          requestCorrelationId = reqCid,
+          responseCorrelationId = err.correlationId,
+          extraLoggingContext = Some(methodLoggingContext)
+        )
+        err.copy(correlationId = resultCorrelationId)
+      },
+      resp => {
+        val resultCorrelationId = checkIdsMatch(reqCid, resp.correlationId, Some(methodLoggingContext))
+        resp.copy(correlationId = resultCorrelationId)
+      }
+    )
   }
 }

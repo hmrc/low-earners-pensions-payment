@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package controllers.requests
+package models.requests
 
+import models.CorrelationId
 import play.api.mvc.{Request, WrappedRequest}
 
 case class RequestWithCorrelationId[A](request: Request[A], correlationId: CorrelationId)

@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import controllers.requests.CorrelationId
+import models.CorrelationId
 import models.requests.{AuthUser, IdentifierRequest}
 import play.api.mvc.*
 

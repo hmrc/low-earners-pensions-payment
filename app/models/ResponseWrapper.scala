@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package models.response
+package models
 
-import base.SpecBase
-import models.ResponseWrapper
+import models.CorrelationId
 
-class ResponseWrapperSpec extends SpecBase {
-  "map" - {
-    "on responseData" in {
-      val responseWrapper = ResponseWrapper[String]("my id", "beans")
-      responseWrapper.map(_.toUpperCase) mustBe ResponseWrapper[String]("my id", "BEANS")
-    }
-  }
+case class ResponseWrapper[+A](correlationId: CorrelationId, responseData: A) {
+  def map[B](f: A => B): ResponseWrapper[B] = ResponseWrapper(correlationId, f(responseData))
 }

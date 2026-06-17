@@ -16,7 +16,7 @@
 
 package models.requests
 
-import controllers.requests.CorrelationId
+import models.CorrelationId
 import play.api.mvc.{Request, WrappedRequest}
 
 case class IdentifierRequest[A](request: Request[A], user: AuthUser, correlationId: CorrelationId) extends WrappedRequest[A](request)

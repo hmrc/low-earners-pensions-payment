@@ -1,6 +1,7 @@
 # microservice specific routes
 
-GET        /get-payment-details     controllers.GetPaymentDetailsController.getPaymentDetails
+GET        /get-payment-details          controllers.GetPaymentDetailsController.getPaymentDetails
+POST       /accept-payment/:taxYear      controllers.AcceptLeppPaymentController.acceptPayment(taxYear: String)
 
 #######################################
 # BARs verify status (for lockout)

@@ -18,7 +18,7 @@ package controllers
 
 import connectors.GetPaymentDetailsConnector
 import controllers.actions.IdentifierAction
-import controllers.requests.CorrelationId
+import models.CorrelationId
 import play.api.libs.json.*
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController

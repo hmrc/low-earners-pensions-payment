@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package controllers.requests
+package models.nps.accept
 
-import scala.language.implicitConversions
+import play.api.libs.json.{Json, OFormat}
 
-case class CorrelationId(value: String)
+case class LowEarnersAccountDetails(accountName: String,
+                                    accountNumber: String,
+                                    sortCode: String,
+                                    rollNumber: Option[String])
 
-object CorrelationId {
-  implicit def correlationIdConverter(str: String): CorrelationId = CorrelationId(str)
+object LowEarnersAccountDetails {
+  implicit val format: OFormat[LowEarnersAccountDetails] = Json.format[LowEarnersAccountDetails]
 }

@@ -16,54 +16,59 @@
 
 package connectors
 
+import com.google.inject.Singleton
 import config.AppConfig
-import models.{CorrelationId, ResponseWrapper}
 import models.errors.ErrorWrapper
-import models.nps.retrieve.RetrieveClaimsResponse
+import models.nps.accept.{AcceptLeppPaymentRequest, AcceptLeppPaymentResponse}
+import models.{CorrelationId, ResponseWrapper}
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.http.Status.*
+import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.client.HttpClientV2
 import utils.ErrorCodes.*
-import utils.HeaderKey.*
+import utils.HeaderKey.{ENVIRONMENT, correlationIdKey, govUkOriginatorIdKey}
 import utils.Logging
 
 import java.net.URI
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 @Singleton
-class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: HttpClientV2)
-    extends BaseNpsConnector[RetrieveClaimsResponse]
+class AcceptLeppPaymentConnector @Inject()(val config: AppConfig, val http: HttpClientV2)
+  extends BaseNpsConnector[AcceptLeppPaymentResponse]
     with Logging {
 
-  def retrieveDetails(nino: String)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext,
-    correlationId: CorrelationId
-  ): ConnectorResult[RetrieveClaimsResponse] = {
-    val retrieveUrl = s"${config.npsUrl}/$nino/calculation-results"
+  override val successStatus: Int = CREATED
 
-    val methodLoggingContext: String = "retrieveDetails"
-
+  def acceptPayment(request: AcceptLeppPaymentRequest)
+                   (implicit hc: HeaderCarrier,
+                    ec: ExecutionContext,
+                    correlationId: CorrelationId): ConnectorResult[AcceptLeppPaymentResponse] = {
+    val methodLoggingContext: String = "acceptPayment"
+    val acceptPaymentUrl = s"${config.npsUrl}/${request.identifier}/tax-year/${request.taxYear}/payment-claims"
+    
     handleConnectorResult(methodLoggingContext)(
       http
-        .get(URI.create(retrieveUrl).toURL)
+        .post(URI.create(acceptPaymentUrl).toURL)
         .setHeader(
           (correlationIdKey, correlationId.value),
           (govUkOriginatorIdKey, config.govUkOriginatorId),
           (AUTHORIZATION, authorization()),
           (ENVIRONMENT, config.npsEnv)
         )
-        .execute[Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]]]
+        .withBody(Json.toJson(request.body))
+        .execute[Either[ErrorWrapper, ResponseWrapper[AcceptLeppPaymentResponse]]]
     )
   }
 
   override protected[connectors] val errorMap: Map[Int, String] = Map(
     BAD_REQUEST -> BAD_REQUEST_ERROR,
-    FORBIDDEN -> NOT_FOUND_ERROR,
+    FORBIDDEN -> FORBIDDEN_ERROR,
     NOT_FOUND -> NOT_FOUND_ERROR,
-    UNPROCESSABLE_ENTITY -> NOT_FOUND_ERROR,
+    CONFLICT -> CONFLICT_ERROR,
+    UNPROCESSABLE_ENTITY -> UNPROCESSABLE_ERROR,
     INTERNAL_SERVER_ERROR -> INTERNAL_ERROR,
     SERVICE_UNAVAILABLE -> SERVICE_UNAVAILABLE_ERROR
   )

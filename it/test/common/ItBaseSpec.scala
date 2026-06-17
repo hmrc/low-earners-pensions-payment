@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package base
+package common
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.client.WireMock.*
@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.matching.StringValuePattern
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import com.google.inject.{AbstractModule, Provides}
 import controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import models.nps.accept.{AcceptLeppPaymentRequestBody, AcceptLeppPaymentResponse, LowEarnersAccountDetails}
 import models.nps.retrieve.{LowEarnersCalculation, LowEarnersClaimDetails, LowEarnersDataDetails, LowEarnersDetails, RetrieveClaimsResponse}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.concurrent.ScalaFutures
@@ -81,7 +82,7 @@ abstract class ItBaseSpec
       request.withSession(SessionKeys.sessionId -> sessionId)
   }
 
-  lazy val overridingsModule: AbstractModule = new AbstractModule {
+  lazy val overridingModule: AbstractModule = new AbstractModule {
     @Provides
     @unused
     def clock: Clock = {
@@ -90,7 +91,7 @@ abstract class ItBaseSpec
     }
   }
 
-  val overridingGuiceableModule: Seq[GuiceableModule] = Seq(GuiceableModule.fromGuiceModules(List(overridingsModule)))
+  val overridingGuiceableModule: Seq[GuiceableModule] = Seq(GuiceableModule.fromGuiceModules(List(overridingModule)))
 
   val application: Application = new GuiceApplicationBuilder()
     .configure(
@@ -147,20 +148,20 @@ abstract class ItBaseSpec
     originalAmount = Some(10.56)
   )
 
-  private val calculation: LowEarnersCalculation = LowEarnersCalculation(
+  private val leppCalculation: LowEarnersCalculation = LowEarnersCalculation(
     lowEarnersClaimDetails = claimDetails,
     lowEarnersDataDetails = dataDetails
   )
 
-  private val details: LowEarnersDetails = LowEarnersDetails(
+  private val leppDetails: LowEarnersDetails = LowEarnersDetails(
     taxYear = 11,
-    lowEarnersCalculations = Seq(calculation)
+    lowEarnersCalculations = Seq(leppCalculation)
   )
 
   val retrieveResponse: RetrieveClaimsResponse = RetrieveClaimsResponse(
     currentLowEarnersOptimisticLock = 123,
     identifier = "id",
-    lowEarnersDetailsList = Seq(details)
+    lowEarnersDetailsList = Seq(leppDetails)
   )
   
   val dummyRetrieveResponse: RetrieveClaimsResponse = RetrieveClaimsResponse(0, "Zero", Nil)
@@ -204,4 +205,30 @@ abstract class ItBaseSpec
       |}
     """.stripMargin
   )
+
+  val accountDetails: LowEarnersAccountDetails = LowEarnersAccountDetails(
+    accountName = "Name",
+    accountNumber = "12345678",
+    sortCode = "123456",
+    rollNumber = Some("ROLL")
+  )
+
+  val acceptRequestBodyModel: AcceptLeppPaymentRequestBody = AcceptLeppPaymentRequestBody(
+    currentLowEarnersOptimisticLock = 1234,
+    lowEarnersAccountDetails = accountDetails
+  )
+  val acceptRequestBodyJson: String = Json.toJson(acceptRequestBodyModel).toString
+
+  val acceptResponseModel: AcceptLeppPaymentResponse = AcceptLeppPaymentResponse(updatedLowEarnersOptimisticLock = 124)
+
+  val dummyAcceptResponse: AcceptLeppPaymentResponse = AcceptLeppPaymentResponse(updatedLowEarnersOptimisticLock = 999)
+  
+  val acceptResponseJson: JsValue = Json.parse(
+    """
+      |{
+      | "updatedLowEarnersOptimisticLock": 124
+      |}
+    """.stripMargin
+  )
+  
 }

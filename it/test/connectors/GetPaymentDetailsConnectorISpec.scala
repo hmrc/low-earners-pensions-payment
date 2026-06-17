@@ -16,13 +16,12 @@
 
 package connectors
 
-import base.ItBaseSpec
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import controllers.requests.CorrelationId
+import common.ItBaseSpec
+import models.{CorrelationId, ResponseWrapper}
 import models.errors.{ErrorWrapper, LeppError}
 import models.nps.retrieve.RetrieveClaimsResponse
-import models.response.ResponseWrapper
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
 import org.scalactic.Prettifier.default

@@ -16,6 +16,6 @@
 
 package models.errors
 
-import controllers.requests.CorrelationId
+import models.CorrelationId
 
 case class ErrorWrapper(correlationId: CorrelationId, error: LeppError)

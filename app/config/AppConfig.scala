@@ -26,11 +26,9 @@ import scala.concurrent.duration.FiniteDuration
 
 @Singleton
 class AppConfig @Inject()(configuration: Configuration):
-
   private def loadConfig(key: String): String = configuration.get[String](key)
 
   val appName: String = loadConfig("appName")
-
   val host: String = loadConfig("host")
 
   val confidenceLevel: ConfidenceLevel =
@@ -42,15 +40,13 @@ class AppConfig @Inject()(configuration: Configuration):
   private lazy val npsBase: String = servicesConfig.baseUrl("nps")
 
   private lazy val npsContext: String = loadConfig("urls.npsContext")
-  lazy val getPaymentDetailsUrl: String = npsBase + npsContext + s"/${loadConfig("urls.getPaymentDetails")}"
+  lazy val npsUrl: String = npsBase + npsContext + s"/${loadConfig("urls.npsPath")}"
 
   lazy val npsClientId: String = loadConfig("nps-headers.clientId")
   lazy val npsSecret: String = loadConfig("nps-headers.secret")
   lazy val npsEnv: String = loadConfig("nps-headers.env")
 
   lazy val govUkOriginatorId: String = loadConfig("nps-headers.govUkOriginatorId")
-
-
   val encryptionKey: String = servicesConfig.getString("mongodb.encryption-key")
 
   val barsVerifyRepoTtl: FiniteDuration     = configuration.get[FiniteDuration]("bars.verify.repoTtl")

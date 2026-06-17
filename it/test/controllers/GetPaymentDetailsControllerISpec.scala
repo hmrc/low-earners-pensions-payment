@@ -16,9 +16,9 @@
 
 package controllers
 
-import base.ItBaseSpec
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import common.ItBaseSpec
 import config.AppConfig
 import models.nps.retrieve.RetrieveClaimsResponse
 import org.mockito.Mockito.reset

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package models.response
+package models.nps.accept
 
-import controllers.requests.CorrelationId
+import uk.gov.hmrc.domain.Nino
 
-case class ResponseWrapper[+A](correlationId: CorrelationId, responseData: A) {
-  def map[B](f: A => B): ResponseWrapper[B] = ResponseWrapper(correlationId, f(responseData))
-}
+case class AcceptLeppPaymentRequest(identifier: Nino, taxYear: BigInt, body: AcceptLeppPaymentRequestBody)

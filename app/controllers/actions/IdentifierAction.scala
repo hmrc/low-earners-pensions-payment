@@ -18,9 +18,9 @@ package controllers.actions
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
-import controllers.requests.{CorrelationId, RequestWithCorrelationId}
+import models.CorrelationId
 import models.errors.{InvalidBearerTokenError, MissingCorrelationIdError, UnauthorisedError}
-import models.requests.{AuthUser, IdentifierRequest}
+import models.requests.{AuthUser, IdentifierRequest, RequestWithCorrelationId}
 import play.api.libs.json.Json
 import play.api.mvc.*
 import play.api.mvc.Results.{InternalServerError, Unauthorized}
