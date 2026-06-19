@@ -13,7 +13,8 @@ lazy val microservice = Project("low-earners-pensions-payment", file("."))
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     scalafmtOnCompile := true,
-    PlayKeys.playDefaultPort := 7504
+    PlayKeys.playDefaultPort := 7504,
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources"
   )
   .settings(scalacOptions ++= commonScalacOptions)
   .settings(CodeCoverageSettings())

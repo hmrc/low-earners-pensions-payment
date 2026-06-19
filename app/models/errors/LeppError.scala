@@ -17,6 +17,7 @@
 package models.errors
 
 import play.api.libs.json.{JsArray, JsObject, JsString, Json, OWrites}
+import utils.ErrorCodes.NOT_FOUND_ERROR
 
 sealed case class LeppError(
   code: String,
@@ -59,6 +60,12 @@ object InternalLeppError
       code = "INTERNAL_SERVER_ERROR",
       message = "An internal server error occurred"
     )
+
+object NoDataError
+  extends LeppError(
+    code = NOT_FOUND_ERROR,
+    message = "No LEPP details found in response"
+  )
 
 object MissingCorrelationIdError
     extends LeppError(

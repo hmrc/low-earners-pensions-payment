@@ -18,6 +18,7 @@ package base
 
 import controllers.actions.{FakeIdentifierAction, IdentifierAction}
 import models.CorrelationId
+import models.nps.GetSummaryResponse
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -30,6 +31,7 @@ import play.api.libs.ws.WSClient
 import play.api.mvc.BodyParsers
 import play.api.test.Helpers.running
 import models.nps.retrieve.*
+import models.nps.SummaryStatus.NO_ACTIONS
 
 import java.net.URLEncoder
 import scala.reflect.ClassTag
@@ -105,6 +107,11 @@ trait SpecBase
     currentLowEarnersOptimisticLock = 123,
     identifier = "id",
     lowEarnersDetailsList = Seq(details)
+  )
+  
+  val getSummaryResponse: GetSummaryResponse = GetSummaryResponse(
+    status = NO_ACTIONS,
+    data = Some(retrieveResponse)
   )
 
   def generateNino(prefix: String = "AA"): String = {

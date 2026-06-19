@@ -18,7 +18,7 @@ package connectors
 
 import config.AppConfig
 import models.{CorrelationId, ResponseWrapper}
-import models.errors.ErrorWrapper
+import models.errors.{ErrorWrapper, NoDataError}
 import models.nps.retrieve.RetrieveClaimsResponse
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.http.Status.*
@@ -56,14 +56,16 @@ class GetPaymentDetailsConnector @Inject()(val config: AppConfig, val http: Http
           (ENVIRONMENT, config.npsEnv)
         )
         .execute[Either[ErrorWrapper, ResponseWrapper[RetrieveClaimsResponse]]]
-    )
+    ).subflatMap{
+      case ResponseWrapper(cid, data) if data.lowEarnersDetailsList.isEmpty => Left(ErrorWrapper(cid, NoDataError))
+      case success => Right(success)
+    }
   }
 
   override protected[connectors] val errorMap: Map[Int, String] = Map(
     BAD_REQUEST -> BAD_REQUEST_ERROR,
     FORBIDDEN -> NOT_FOUND_ERROR,
     NOT_FOUND -> NOT_FOUND_ERROR,
-    UNPROCESSABLE_ENTITY -> NOT_FOUND_ERROR,
     INTERNAL_SERVER_ERROR -> INTERNAL_ERROR,
     SERVICE_UNAVAILABLE -> SERVICE_UNAVAILABLE_ERROR
   )
