@@ -18,20 +18,20 @@ package services
 
 import cats.data.OptionT
 import config.AppConfig
-import models.bars.{BarsVerifyStatus, BarsVerifyStatusId, BarsVerifyStatusResponse, EncryptedBarsVerifyStatus, NumberOfBarsVerifyAttempts}
+import models.bars.*
 import repositories.{BarsVerifyStatusRepo, MongoCrypto}
 
-import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant}
+import java.time.temporal.ChronoUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BarsVerifyStatusService @Inject()(
   barsRepo: BarsVerifyStatusRepo,
-  config:   AppConfig,
-  crypto:   MongoCrypto,
-  clock:    Clock
+  config:AppConfig,
+  crypto: MongoCrypto,
+  clock: Clock                                      
 )(implicit ec: ExecutionContext) {
 
   import crypto.*
@@ -59,7 +59,7 @@ class BarsVerifyStatusService @Inject()(
         val newVerifyCalls          = status.verifyCalls.increment
         val expiry: Option[Instant] =
           if (newVerifyCalls.value >= config.barsVerifyMaxAttempts)
-            Some(Instant.now(clock).plus(24, ChronoUnit.HOURS))
+            Some(Instant.now(clock).plus(config.barsVerifyRepoTtl.toMinutes, ChronoUnit.MINUTES))
           else None
 
         status.copy(
