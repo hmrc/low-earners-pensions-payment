@@ -54,8 +54,7 @@ object FrozenTime {
   def reset(): Unit = setTime(initialLocalDate)
 
   private val initialLocalDate = LocalDate.parse("2020-12-25")
-
-  @SuppressWarnings(Array("org.wartremover.warts.Var"))
+  
   private var currentClock: Clock = DatesSupport.fixedClockUTC(initialLocalDate)
 
   private val testClock: Clock = new Clock {
