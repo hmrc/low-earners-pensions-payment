@@ -36,6 +36,7 @@ import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 import play.api.libs.json.{JsObject, JsString, JsValue, Json}
 import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
+import play.api.test.Helpers.AUTHORIZATION
 import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.http.test.{HttpClientV2Support, WireMockSupport}
 import utils.FrozenTime
@@ -124,6 +125,15 @@ abstract class ItBaseSpec
         .willReturn(response)
     )
 
+  def stubPostWithAuth(url: String, requestBody: String, response: ResponseDefinitionBuilder): StubMapping =
+    wireMockServer.stubFor(
+      post(urlEqualTo(url))
+        .withHeader("Content-Type", equalTo("application/json"))
+        .withHeader(AUTHORIZATION, equalTo("token"))
+        .withRequestBody(equalTo(requestBody))
+        .willReturn(response)
+    )
+    
   private val dataDetails: LowEarnersDataDetails = LowEarnersDataDetails(
     responseTimestamp = Some("2023-06-27 09:12:28"),
     calculationSequenceNumber = 123,

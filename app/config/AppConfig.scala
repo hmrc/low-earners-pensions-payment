@@ -21,6 +21,7 @@ import play.api.Configuration
 import uk.gov.hmrc.auth.core.ConfidenceLevel
 import uk.gov.hmrc.auth.core.ConfidenceLevel.L250
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.webchat.config.Service
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -52,3 +53,10 @@ class AppConfig @Inject()(configuration: Configuration):
   val barsVerifyRepoTtl: FiniteDuration     = configuration.get[FiniteDuration]("bars.verify.repoTtl")
   val barsVerifyMaxAttempts: Int            = configuration.get[Int]("bars.verify.maxAttempts")
   val barsVerifyRepoReplaceIndexes: Boolean = configuration.get[Boolean]("bars.verify.replaceIndexes")
+
+  // Private Beta
+  val privateBetaEnabled: Boolean = configuration.get[Boolean]("feature-switch.privateBetaEnabled")
+  
+  // User allow list
+  val userAllowListService: Service = configuration.get[Service]("microservice.services.user-allow-list")
+  val internalAuthToken: String = configuration.get[String]("internal-auth.token")

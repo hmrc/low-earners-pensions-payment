@@ -35,6 +35,7 @@ package controllers.actions
 import base.SpecBase
 import com.google.inject.Inject
 import config.AppConfig
+import connectors.UserAllowListConnector
 import models.errors.{InvalidBearerTokenError, UnauthorisedError}
 import models.requests.{AuthUser, IdentifierRequest}
 import org.mockito.ArgumentMatchers.any
@@ -58,9 +59,11 @@ class AuthIdentifierActionSpec extends SpecBase with StubPlayBodyParsersFactory 
 
   private val mockAuthConnector: AuthConnector = mock[AuthConnector]
   private val mockAppConfig: AppConfig = mock[AppConfig]
+  private val mockUserAllowListConnector: UserAllowListConnector = mock[UserAllowListConnector]
   
   def authAction = new AuthIdentifierAction(
     authConnector = mockAuthConnector,
+    userAllowListConnector = mockUserAllowListConnector,
     config = mockAppConfig,
     playBodyParsers = parsers
   )(ExecutionContext.global)
@@ -138,11 +141,22 @@ class AuthIdentifierActionSpec extends SpecBase with StubPlayBodyParsersFactory 
         val result = handler.run(fakeRequestWithCorrelationId)
         redirectLocation(result) mustBe None
       }
+
+      "when user has pta enrolment but not added to private beta allow list" in runningApplication { _ =>
+        when(mockAppConfig.confidenceLevel).thenReturn(L250)
+        when(mockUserAllowListConnector.check(any(), any())(any())).thenReturn(Future.successful(false))
+        when(mockAppConfig.privateBetaEnabled).thenReturn(true)
+
+        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250))
+        val result = handler.run(fakeRequestWithCorrelationId)
+        contentAsJson(result) mustBe Json.toJson(UnauthorisedError)
+      }
     }
 
     "return an IdentifierRequest" - {
       "User has a pta enrolment" in runningApplication { _ =>
         when(mockAppConfig.confidenceLevel).thenReturn(L250)
+        when(mockAppConfig.privateBetaEnabled).thenReturn(false)
         setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250))
 
         val result = handler.run(fakeRequestWithCorrelationId)
@@ -153,6 +167,21 @@ class AuthIdentifierActionSpec extends SpecBase with StubPlayBodyParsersFactory 
         (contentAsJson(result) \ "nino").asOpt[String] mustBe Some("AA123456C")
       }
 
+      "User has a pta enrolment and added to private beta allow list" in runningApplication { _ =>
+        when(mockAppConfig.confidenceLevel).thenReturn(L250)
+        when(mockUserAllowListConnector.check(any(), any())(any())).thenReturn(Future.successful(true))
+        when(mockAppConfig.privateBetaEnabled).thenReturn(true)
+        
+        setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250))
+
+        val result = handler.run(fakeRequestWithCorrelationId)
+
+        status(result) mustBe OK
+        (contentAsJson(result) \ "userId").asOpt[String] mustBe Some("internalId")
+        (contentAsJson(result) \ "correlationId").asOpt[String] mustBe Some("x-id")
+        (contentAsJson(result) \ "nino").asOpt[String] mustBe Some("AA123456C")
+      }
+      
       "must throw an error when correlationId is missing from request headers" in runningApplication { _ =>
         when(mockAppConfig.confidenceLevel).thenReturn(L250)
         setAuthValue(authResult(Some("internalId"), Some("AA123456C"), L250))
