@@ -18,6 +18,7 @@ package controllers.actions
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import config.AppConfig
+import connectors.UserAllowListConnector
 import models.CorrelationId
 import models.errors.{InvalidBearerTokenError, MissingCorrelationIdError, UnauthorisedError}
 import models.requests.{AuthUser, IdentifierRequest, RequestWithCorrelationId}
@@ -38,6 +39,7 @@ trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent]
 
 @Singleton
 class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
+                                     userAllowListConnector: UserAllowListConnector,
                                      config: AppConfig,
                                      playBodyParsers: BodyParsers.Default)
                                     (implicit override val executionContext: ExecutionContext)
@@ -80,7 +82,7 @@ class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
               context = logContext,
               message = s"User is authorised to access the LEPP service with correlationId: ${req.correlationId.value}"
             )
-            block(IdentifierRequest(request, AuthUser.apply(internalId, nino), req.correlationId))
+            isValidUser(IdentifierRequest(request, AuthUser.apply(internalId, nino), req.correlationId), block)
           case Some(_) ~ Some(_) ~ _ =>
             warnLog(
               context = logContext,
@@ -115,4 +117,15 @@ class AuthIdentifierAction @Inject()(override val authConnector: AuthConnector,
       }
     }
   }
+
+  private def isValidUser[A](request: IdentifierRequest[A], block: IdentifierRequest[A] => Future[Result])
+                            (implicit hc: HeaderCarrier): Future[Result] =
+    if (config.privateBetaEnabled) {
+      userAllowListConnector.check("nino", request.user.nino.value) flatMap {
+        case true => block(request)
+        case false => Future.successful(Unauthorized(Json.toJson(UnauthorisedError)))
+      }
+    } else {
+      block(request)
+    }
   
