@@ -18,5 +18,5 @@ package utils
 
 object Constants {
 
-  val ptaEnrolmentKey = "HMRC-PI"
+  val ptaEnrolmentKey = "HMRC-PT"
 }
