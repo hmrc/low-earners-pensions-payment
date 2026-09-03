@@ -92,7 +92,6 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
           Right[ErrorWrapper, ResponseWrapper[Rds]](ResponseWrapper(correlationId, value)).withLeft
         case JsError(errors) =>
           logger.error(s"$extraContext - $methodLoggingContext: Json validation failed")
-          logger.error(s"[TEMPORARY-ERROR-PLEASE-REMOVE] - $responseJson")
           Left(ErrorWrapper(correlationId, InternalLeppError))
       }
     } catch {
