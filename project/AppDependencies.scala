@@ -12,7 +12,7 @@ object AppDependencies {
     "uk.gov.hmrc.mongo"             %% "hmrc-mongo-work-item-repo-play-30" % hmrcMongoVersion,
     "org.typelevel"                 %% "cats-core"                  % "2.13.0",
     "com.fasterxml.jackson.module"  %% "jackson-module-scala"       % "2.20.0",
-    "uk.gov.hmrc"                   %% s"sca-wrapper-$playVersion"  % "4.14.0",
+    "uk.gov.hmrc"                   %% s"sca-wrapper-$playVersion"  % "6.3.0",
     "com.softwaremill.retry"        %% "retry"                      % "0.3.6",
   )
 
