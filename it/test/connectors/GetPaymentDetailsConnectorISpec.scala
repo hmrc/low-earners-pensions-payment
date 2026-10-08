@@ -28,7 +28,6 @@ import org.scalactic.Prettifier.default
 import play.api.Application
 import play.api.http.Status.*
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.JsValue
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.http.HeaderCarrier
 

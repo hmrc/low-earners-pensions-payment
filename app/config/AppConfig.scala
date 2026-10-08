@@ -48,7 +48,7 @@ class AppConfig @Inject()(configuration: Configuration):
   lazy val npsEnv: String = loadConfig("nps-headers.env")
 
   lazy val govUkOriginatorId: String = loadConfig("nps-headers.govUkOriginatorId")
-  val encryptionKey: String = servicesConfig.getString("mongodb.encryption-key")
+  val encryptionKey: String = servicesConfig.getString("mongodb.encryption.key")
 
   val barsVerifyRepoTtl: FiniteDuration     = configuration.get[FiniteDuration]("bars.verify.repoTtl")
   val barsVerifyMaxAttempts: Int            = configuration.get[Int]("bars.verify.maxAttempts")
