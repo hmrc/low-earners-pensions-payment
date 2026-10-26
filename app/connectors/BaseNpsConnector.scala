@@ -86,7 +86,6 @@ abstract class BaseNpsConnector[Resp: Reads] extends HttpErrorFunctions { this: 
 
     try {
       val responseJson: JsValue = Json.parse(body)
-      logger.debug(s"[TEMPORARY-DEBUG-PLEASE-REMOVE] - $responseJson")
       responseJson.validate[Rds] match {
         case JsSuccess(value, _) =>
           Right[ErrorWrapper, ResponseWrapper[Rds]](ResponseWrapper(correlationId, value)).withLeft
